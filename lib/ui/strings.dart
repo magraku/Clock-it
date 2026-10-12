@@ -4,6 +4,28 @@ abstract final class Str {
   static const logIn = 'Log in';
   static const signIn = 'Sign in';
 
+  // Account sheet. "Log in" opens an existing account, "Sign in" creates one.
+  static const logInTitle = 'Welcome back';
+  static const signUpTitle = 'Create your account';
+  static const signUpHelp = 'Your hours are saved to your account, so you can see them on any phone.';
+  static const email = 'Email';
+  static const password = 'Password';
+  static const passwordHint = 'At least 6 characters';
+  static const createAccount = 'Create account';
+  static const forgotPassword = 'Forgot your password?';
+  static const resetSent = 'We sent you an email to choose a new password.';
+  static const noAccount = 'New here? Create an account';
+  static const haveAccount = 'Already have an account? Log in';
+  static const authInvalidEmail = 'That email doesn’t look right.';
+  static const authWrongCredentials = 'Wrong email or password.';
+  static const authEmailInUse = 'There is already an account with that email. Log in instead.';
+  static const authWeakPassword = 'Use at least 6 characters.';
+  static const authDisabled = 'This account has been disabled.';
+  static const authTooMany = 'Too many tries. Wait a moment and try again.';
+  static const authOffline = 'No connection. Check your internet and try again.';
+  static const authGeneric = 'Something went wrong. Try again.';
+  static const authMissing = 'Enter your email and password.';
+
   static const markEntry = 'Mark entry';
   static const markExit = 'Mark exit';
   static String inSince(String time, String elapsed) => 'In since $time · $elapsed';
@@ -56,6 +78,11 @@ abstract final class Str {
   static const today = 'Go to today';
   static const changeGoal = 'Change goal';
   static const backup = 'Backup';
+  static const logOut = 'Log out';
+  static const deleteAccount = 'Delete account';
+  static const deleteAccountHelp =
+      'This deletes your account and all its hours for good. Enter your password to confirm.';
+  static const logOutConfirm = 'Log out of this phone? Your hours stay saved in your account.';
 
   // Backup sheet
   static const backupHelp =
@@ -67,6 +94,6 @@ abstract final class Str {
   static const copied = 'Backup copied';
   static const imported = 'Backup restored';
   static const importFailed = 'That isn’t a valid Clock it backup.';
-  static const importConfirm = 'This replaces all the hours on this phone. Continue?';
+  static const importConfirm = 'This replaces all the hours in your account. Continue?';
   static const replace = 'Replace';
 }

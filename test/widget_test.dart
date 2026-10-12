@@ -1,49 +1,107 @@
-import 'package:clock_it/data/hours_store.dart';
 import 'package:clock_it/main.dart';
-import 'package:clock_it/state/app_state.dart';
 import 'package:clock_it/ui/strings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'support/fakes.dart';
 import 'support/fonts.dart';
 
 void main() {
   setUpAll(loadAppFonts);
 
-  testWidgets('splash → welcome → home, then mark entry and exit', (tester) async {
-    SharedPreferences.setMockInitialValues({});
+  late FakeAccounts accounts;
+  late Map<String, Map<String, dynamic>> cloud;
+
+  setUp(() {
+    accounts = FakeAccounts();
+    cloud = {};
+  });
+
+  Future<void> start(WidgetTester tester) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
-
-    final state = AppState(LocalHoursStore());
-    await tester.pumpWidget(ClockItApp(state: state));
-
-    // Splash waits ~1.3 s, then fades to the welcome screen.
+    await tester.pumpWidget(ClockItApp(services: fakeServices(accounts, cloud)));
+    // Splash waits ~1.3 s, then fades to the next screen.
     await pumpUntilFound(tester, find.text(Str.logIn));
-    expect(find.text(Str.logIn), findsOneWidget);
-    expect(find.text(Str.signIn), findsOneWidget);
+  }
 
-    await tester.tap(find.text(Str.logIn));
+  Future<void> fillAccountSheet(WidgetTester tester, String email, String password, String button) async {
+    await tester.enterText(find.widgetWithText(TextField, Str.email), email);
+    await tester.enterText(find.byType(TextField).last, password);
+    await tester.tap(find.text(button).last);
     await pumpUntilFound(tester, find.text(Str.markEntry));
     await tester.pumpAndSettle();
-    expect(find.text(Str.markEntry), findsOneWidget);
-    expect(find.text(Str.hoursLeft), findsOneWidget);
+  }
+
+  Future<void> logOut(WidgetTester tester) async {
+    await tester.tap(find.byIcon(Icons.more_horiz));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(Str.logOut));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(Str.logOut).last); // confirm
+    await pumpUntilFound(tester, find.text(Str.logIn));
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('each account keeps its own hours', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    await start(tester);
+    expect(find.text(Str.signIn), findsOneWidget);
+
+    // Ana creates an account and logs a session.
+    await tester.tap(find.text(Str.signIn));
+    await tester.pumpAndSettle();
+    expect(find.text(Str.signUpTitle), findsOneWidget);
+    await fillAccountSheet(tester, 'ana@mail.com', 'secret1', Str.createAccount);
     expect(find.text('140h'), findsWidgets); // empty month: everything left
 
     await tester.tap(find.text(Str.markEntry));
     await tester.pump();
     expect(find.text(Str.markExit), findsOneWidget);
-    expect(state.isOpen, isTrue);
-
     await tester.tap(find.text(Str.markExit));
     await tester.pump();
     expect(find.text(Str.markEntry), findsOneWidget);
-    expect(state.isOpen, isFalse);
-    expect(state.data.days.values.single.sessions, hasLength(1));
+    expect((cloud['uid-0']!['days'] as Map), hasLength(1));
 
-    // Second launch skips the welcome screen.
-    expect(await LocalHoursStore().hasSeenWelcome(), isTrue);
+    await logOut(tester);
+
+    // Bea creates her own account: it starts empty.
+    await tester.tap(find.text(Str.logIn));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(Str.noAccount));
+    await tester.pumpAndSettle();
+    await fillAccountSheet(tester, 'bea@mail.com', 'secret2', Str.createAccount);
+    expect(cloud['uid-1'], isNull);
+    await logOut(tester);
+
+    // A wrong password is refused.
+    await tester.tap(find.text(Str.logIn));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.widgetWithText(TextField, Str.email), 'ana@mail.com');
+    await tester.enterText(find.byType(TextField).last, 'nope!!');
+    await tester.tap(find.text(Str.logIn).last);
+    await tester.pumpAndSettle();
+    expect(find.text(Str.authWrongCredentials), findsOneWidget);
+
+    // Ana logs back in and finds her hours.
+    await tester.enterText(find.byType(TextField).last, 'secret1');
+    await tester.tap(find.text(Str.logIn).last);
+    await pumpUntilFound(tester, find.text(Str.markEntry));
+    await tester.pumpAndSettle();
+    expect(find.text(Str.markEntry), findsOneWidget);
+    expect(accounts.current?.email, 'ana@mail.com');
+  });
+
+  testWidgets('a remembered account skips the welcome screen', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    await accounts.signUp('ana@mail.com', 'secret1');
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(ClockItApp(services: fakeServices(accounts, cloud)));
+    await pumpUntilFound(tester, find.text(Str.markEntry));
+    expect(find.text(Str.markEntry), findsOneWidget);
+    expect(find.text(Str.logIn), findsNothing);
   });
 }
 

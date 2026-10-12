@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../state/app_state.dart';
+import '../../state/session.dart';
+import '../sheets.dart';
 import '../strings.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
@@ -18,11 +20,19 @@ Route<void> fadeRoute(Widget page) => PageRouteBuilder(
           FadeTransition(opacity: CurvedAnimation(parent: a, curve: Curves.easeOut), child: child),
     );
 
+/// Opens the main screen for a signed-in account.
+void goHome(BuildContext context, Services services, AppState state) {
+  Navigator.of(context).pushAndRemoveUntil(
+    fadeRoute(HomeScreen(services: services, state: state)),
+    (_) => false,
+  );
+}
+
 /// Screen 1: logo over the soft background while data loads.
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key, required this.state});
+  const SplashScreen({super.key, required this.services});
 
-  final AppState state;
+  final Services services;
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -37,8 +47,9 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future<void> _start() async {
     final minimum = Future<void>.delayed(const Duration(milliseconds: 1300));
-    await widget.state.load();
-    final seen = await widget.state.hasSeenWelcome();
+    final services = widget.services;
+    final account = await services.accounts.restore();
+    final state = account == null ? null : await services.open(account);
     if (!mounted) return;
     await Future.wait([
       precacheImage(const AssetImage(Assets.bgMain), context),
@@ -46,9 +57,11 @@ class _SplashScreenState extends State<SplashScreen> {
       minimum,
     ]);
     if (!mounted) return;
-    Navigator.of(context).pushReplacement(fadeRoute(
-      seen ? HomeScreen(state: widget.state) : WelcomeScreen(state: widget.state),
-    ));
+    if (state != null) {
+      goHome(context, services, state);
+    } else {
+      Navigator.of(context).pushReplacement(fadeRoute(WelcomeScreen(services: services)));
+    }
   }
 
   @override
@@ -89,18 +102,16 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 }
 
-/// Screen 2: Log in / Sign in.
+/// Screen 2: Log in (existing account) / Sign in (new account).
 class WelcomeScreen extends StatelessWidget {
-  const WelcomeScreen({super.key, required this.state});
+  const WelcomeScreen({super.key, required this.services});
 
-  final AppState state;
+  final Services services;
 
-  Future<void> _continue(BuildContext context) async {
-    // TODO(firebase): real authentication. For now the data stays on this
-    // phone and both buttons just open the app.
-    await state.markWelcomeSeen();
-    if (!context.mounted) return;
-    Navigator.of(context).pushReplacement(fadeRoute(HomeScreen(state: state)));
+  Future<void> _continue(BuildContext context, {required bool signUp}) async {
+    final state = await showAccountSheet(context, services, signUp: signUp);
+    if (state == null || !context.mounted) return;
+    goHome(context, services, state);
   }
 
   @override
@@ -122,7 +133,7 @@ class WelcomeScreen extends StatelessWidget {
                 label: Str.logIn,
                 color: pink,
                 radius: 9.4,
-                onTap: () => _continue(context),
+                onTap: () => _continue(context, signUp: false),
               ),
             ),
             Positioned(
@@ -134,7 +145,7 @@ class WelcomeScreen extends StatelessWidget {
                 label: Str.signIn,
                 color: pink,
                 radius: 9.4,
-                onTap: () => _continue(context),
+                onTap: () => _continue(context, signUp: true),
               ),
             ),
           ]),

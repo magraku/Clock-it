@@ -3,11 +3,13 @@ import 'package:flutter/services.dart';
 
 import '../../logic/time_math.dart';
 import '../../state/app_state.dart';
+import '../../state/session.dart';
 import '../sheets.dart';
 import '../strings.dart';
 import '../theme.dart';
 import '../widgets/calendar_sheet.dart';
 import '../widgets/common.dart';
+import 'intro_screens.dart';
 
 /// Artboard of the main screen, in points (design's third screen).
 const _homeSize = Size(292.6, 604);
@@ -15,8 +17,11 @@ const _contentWidth = 269.3;
 const _contentLeft = (292.6 - _contentWidth) / 2;
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key, required this.state});
+  const HomeScreen({super.key, required this.services, required this.state});
 
+  final Services services;
+
+  /// The signed-in account's hours; this screen closes it when it goes away.
   final AppState state;
 
   @override
@@ -35,7 +40,35 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    state.dispose();
     super.dispose();
+  }
+
+  void _toWelcome() {
+    Navigator.of(context).pushAndRemoveUntil(
+      fadeRoute(WelcomeScreen(services: widget.services)),
+      (_) => false,
+    );
+  }
+
+  Future<void> _logOut() async {
+    final ok = await showAdaptiveDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog.adaptive(
+        content: const Text(Str.logOutConfirm),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(c, false), child: const Text(Str.cancel)),
+          TextButton(onPressed: () => Navigator.pop(c, true), child: const Text(Str.logOut)),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    await widget.services.accounts.logOut();
+    if (mounted) _toWelcome();
+  }
+
+  Future<void> _deleteAccount() async {
+    if (await showDeleteAccountSheet(context, widget.services.accounts) && mounted) _toWelcome();
   }
 
   @override
@@ -85,7 +118,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       summary: summary,
                       onDayTap: (date) => showDaySheet(context, state, date),
                       onGoalTap: () => showGoalSheet(context, state),
-                      onMenuTap: () => showMenuSheet(context, state),
+                      onMenuTap: () => showMenuSheet(
+                        context,
+                        state,
+                        onLogOut: _logOut,
+                        onDeleteAccount: _deleteAccount,
+                      ),
                     ),
                   ),
                 ]);

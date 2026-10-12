@@ -7,8 +7,10 @@ import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../data/accounts.dart';
 import '../logic/time_math.dart';
 import '../state/app_state.dart';
+import '../state/session.dart';
 import 'strings.dart';
 import 'theme.dart';
 import 'widgets/common.dart';
@@ -43,17 +45,27 @@ const _body = TextStyle(fontSize: 16, color: Palette.navy, height: 1.3);
 final _muted = TextStyle(fontSize: 14, color: Palette.navy.withValues(alpha: 0.65), height: 1.3);
 
 class _SheetButton extends StatelessWidget {
-  const _SheetButton(this.label, {required this.onTap, this.color = Palette.green, this.filled = true});
+  const _SheetButton(
+    this.label, {
+    required this.onTap,
+    this.color = Palette.green,
+    this.filled = true,
+    this.busy = false,
+  });
 
   final String label;
   final VoidCallback onTap;
   final Color color;
   final bool filled;
 
+  /// Shows a spinner and ignores taps while something is in flight.
+  final bool busy;
+
   @override
   Widget build(BuildContext context) {
+    final fg = filled ? Colors.white : color;
     return Pressable(
-      onTap: onTap,
+      onTap: busy ? null : onTap,
       semanticLabel: label,
       child: Container(
         height: 52,
@@ -63,15 +75,275 @@ class _SheetButton extends StatelessWidget {
           border: filled ? null : Border.all(color: color, width: 1.5),
           borderRadius: BorderRadius.circular(12),
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: filled ? Colors.white : color,
-          ),
+        child: busy
+            ? SizedBox.square(dimension: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: fg))
+            : Text(label, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: fg)),
+      ),
+    );
+  }
+}
+
+/// Small text link, e.g. "Forgot your password?".
+class _LinkButton extends StatelessWidget {
+  const _LinkButton(this.label, {required this.onTap});
+
+  final String label;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton(
+      onPressed: onTap,
+      style: TextButton.styleFrom(foregroundColor: Palette.navy),
+      child: Text(label, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+    );
+  }
+}
+
+class _PasswordField extends StatefulWidget {
+  const _PasswordField({
+    required this.controller,
+    required this.newPassword,
+    required this.onSubmitted,
+    this.errorText,
+  });
+
+  final TextEditingController controller;
+  final bool newPassword;
+  final VoidCallback onSubmitted;
+  final String? errorText;
+
+  @override
+  State<_PasswordField> createState() => _PasswordFieldState();
+}
+
+class _PasswordFieldState extends State<_PasswordField> {
+  bool _hidden = true;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: widget.controller,
+      obscureText: _hidden,
+      autocorrect: false,
+      enableSuggestions: false,
+      autofillHints: [widget.newPassword ? AutofillHints.newPassword : AutofillHints.password],
+      textInputAction: TextInputAction.done,
+      onSubmitted: (_) => widget.onSubmitted(),
+      style: _body.copyWith(fontSize: 18),
+      decoration: InputDecoration(
+        hintText: widget.newPassword ? Str.passwordHint : Str.password,
+        errorText: widget.errorText,
+        errorMaxLines: 3,
+        suffixIcon: IconButton(
+          tooltip: Str.password,
+          color: Palette.navy,
+          icon: Icon(_hidden ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+          onPressed: () => setState(() => _hidden = !_hidden),
         ),
       ),
+    );
+  }
+}
+
+// ── Account ──────────────────────────────────────────────────────────────────
+
+/// Log in ([signUp] false) or create an account. Returns the account's
+/// hours, already loaded, or null if the sheet was closed.
+Future<AppState?> showAccountSheet(BuildContext context, Services services, {required bool signUp}) =>
+    _showSheet<AppState>(context, (_) => _AccountSheet(services: services, signUp: signUp));
+
+class _AccountSheet extends StatefulWidget {
+  const _AccountSheet({required this.services, required this.signUp});
+
+  final Services services;
+  final bool signUp;
+
+  @override
+  State<_AccountSheet> createState() => _AccountSheetState();
+}
+
+class _AccountSheetState extends State<_AccountSheet> {
+  late bool _signUp = widget.signUp;
+  final _email = TextEditingController();
+  final _password = TextEditingController();
+  bool _busy = false;
+  String? _error;
+  String? _notice;
+
+  @override
+  void dispose() {
+    _email.dispose();
+    _password.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    final email = _email.text.trim();
+    final password = _password.text;
+    if (email.isEmpty || password.isEmpty) {
+      setState(() => _error = Str.authMissing);
+      return;
+    }
+    setState(() {
+      _busy = true;
+      _error = null;
+      _notice = null;
+    });
+    final services = widget.services;
+    final isNew = _signUp;
+    try {
+      final account =
+          isNew ? await services.accounts.signUp(email, password) : await services.accounts.logIn(email, password);
+      final state = await services.open(account, isNew: isNew);
+      TextInput.finishAutofillContext();
+      if (mounted) {
+        Navigator.pop(context, state);
+      } else {
+        // Closed while loading: don't leave someone signed in behind the welcome screen.
+        state.dispose();
+        await services.accounts.logOut();
+      }
+    } on Object catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _error = e is AuthFailure ? e.message : Str.authGeneric;
+      });
+    }
+  }
+
+  Future<void> _reset() async {
+    final email = _email.text.trim();
+    if (email.isEmpty) {
+      setState(() => _error = Str.authInvalidEmail);
+      return;
+    }
+    setState(() => _busy = true);
+    try {
+      await widget.services.accounts.sendPasswordReset(email);
+      if (mounted) setState(() => _notice = Str.resetSent);
+    } on Object catch (e) {
+      if (mounted) setState(() => _error = e is AuthFailure ? e.message : Str.authGeneric);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  void _toggleMode() => setState(() {
+        _signUp = !_signUp;
+        _error = null;
+        _notice = null;
+      });
+
+  @override
+  Widget build(BuildContext context) {
+    return AutofillGroup(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(_signUp ? Str.signUpTitle : Str.logInTitle, style: _title),
+          if (_signUp) ...[
+            const SizedBox(height: 8),
+            Text(Str.signUpHelp, style: _muted),
+          ],
+          const SizedBox(height: 18),
+          TextField(
+            controller: _email,
+            keyboardType: TextInputType.emailAddress,
+            autocorrect: false,
+            enableSuggestions: false,
+            autofillHints: const [AutofillHints.email],
+            textInputAction: TextInputAction.next,
+            style: _body.copyWith(fontSize: 18),
+            decoration: const InputDecoration(hintText: Str.email),
+          ),
+          const SizedBox(height: 12),
+          _PasswordField(
+            controller: _password,
+            newPassword: _signUp,
+            onSubmitted: _submit,
+            errorText: _error,
+          ),
+          if (_notice != null) ...[
+            const SizedBox(height: 10),
+            Text(_notice!, style: _body.copyWith(color: Palette.green, fontWeight: FontWeight.w600)),
+          ],
+          const SizedBox(height: 18),
+          _SheetButton(
+            _signUp ? Str.createAccount : Str.logIn,
+            onTap: _submit,
+            color: Palette.pink,
+            busy: _busy,
+          ),
+          const SizedBox(height: 6),
+          if (!_signUp) _LinkButton(Str.forgotPassword, onTap: _busy ? null : _reset),
+          _LinkButton(_signUp ? Str.haveAccount : Str.noAccount, onTap: _busy ? null : _toggleMode),
+        ],
+      ),
+    );
+  }
+}
+
+/// Asks for the password and deletes the account. Returns true when done.
+Future<bool> showDeleteAccountSheet(BuildContext context, AccountService accounts) async =>
+    await _showSheet<bool>(context, (_) => _DeleteAccountSheet(accounts: accounts)) ?? false;
+
+class _DeleteAccountSheet extends StatefulWidget {
+  const _DeleteAccountSheet({required this.accounts});
+
+  final AccountService accounts;
+
+  @override
+  State<_DeleteAccountSheet> createState() => _DeleteAccountSheetState();
+}
+
+class _DeleteAccountSheetState extends State<_DeleteAccountSheet> {
+  final _password = TextEditingController();
+  bool _busy = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _password.dispose();
+    super.dispose();
+  }
+
+  Future<void> _delete() async {
+    if (_password.text.isEmpty) {
+      setState(() => _error = Str.authMissing);
+      return;
+    }
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      await widget.accounts.deleteAccount(_password.text);
+      if (mounted) Navigator.pop(context, true);
+    } on Object catch (e) {
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          _error = e is AuthFailure ? e.message : Str.authGeneric;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Text(Str.deleteAccount, style: _title),
+        const SizedBox(height: 8),
+        Text(Str.deleteAccountHelp, style: _muted),
+        const SizedBox(height: 18),
+        _PasswordField(controller: _password, newPassword: false, onSubmitted: _delete, errorText: _error),
+        const SizedBox(height: 18),
+        _SheetButton(Str.deleteAccount, onTap: _delete, color: Palette.coral, busy: _busy),
+      ],
     );
   }
 }
@@ -268,7 +540,12 @@ class _GoalSheetState extends State<_GoalSheet> {
 
 // ── Menu ─────────────────────────────────────────────────────────────────────
 
-Future<void> showMenuSheet(BuildContext context, AppState state) async {
+Future<void> showMenuSheet(
+  BuildContext context,
+  AppState state, {
+  required VoidCallback onLogOut,
+  required VoidCallback onDeleteAccount,
+}) async {
   final choice = await _showSheet<String>(context, (c) {
     Widget item(IconData icon, String label, String value) => ListTile(
           contentPadding: EdgeInsets.zero,
@@ -276,10 +553,15 @@ Future<void> showMenuSheet(BuildContext context, AppState state) async {
           title: Text(label, style: _body.copyWith(fontSize: 18)),
           onTap: () => Navigator.pop(c, value),
         );
-    return Column(mainAxisSize: MainAxisSize.min, children: [
+    final email = state.account?.email ?? '';
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, mainAxisSize: MainAxisSize.min, children: [
+      if (email.isNotEmpty) Text(email, style: _muted, overflow: TextOverflow.ellipsis),
       item(Icons.today_outlined, Str.today, 'today'),
       item(Icons.flag_outlined, Str.changeGoal, 'goal'),
       item(Icons.save_alt_outlined, Str.backup, 'backup'),
+      const Divider(height: 12),
+      item(Icons.logout, Str.logOut, 'logout'),
+      item(Icons.person_remove_outlined, Str.deleteAccount, 'delete'),
     ]);
   });
   if (!context.mounted) return;
@@ -290,6 +572,10 @@ Future<void> showMenuSheet(BuildContext context, AppState state) async {
       await showGoalSheet(context, state);
     case 'backup':
       await showBackupSheet(context, state);
+    case 'logout':
+      onLogOut();
+    case 'delete':
+      onDeleteAccount();
   }
 }
 

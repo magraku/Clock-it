@@ -32,3 +32,7 @@ android/app/profile/
 android/app/release/
 **/GeneratedPluginRegistrant.java
 *.jks
+
+# Firebase CLI
+firebase-debug.log
+.firebase/

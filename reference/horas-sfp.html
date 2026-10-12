@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Horas SFP">
+<title>Horas SFP</title>
+<style>
+:root{--bg:#f6f4ef;--card:#fff;--tx:#1d1d1b;--mut:#77756e;--ac:#2f6f5e;--ac2:#b3402e;--bd:#e4e0d6;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f0f0e;--card:#1b1b19;--tx:#f0eee8;--mut:#9a978d;--ac:#4fae94;--ac2:#e0705c;--bd:#2c2c29}}
+:root[data-theme="dark"]{--bg:#0f0f0e;--card:#1b1b19;--tx:#f0eee8;--mut:#9a978d;--ac:#4fae94;--ac2:#e0705c;--bd:#2c2c29}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--tx);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+#app{max-width:480px;margin:0 auto;padding:16px}
+.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.top b{font-size:20px;text-transform:capitalize}
+.nb{border:1px solid var(--bd);background:var(--card);color:var(--tx);width:40px;height:40px;border-radius:50%;font-size:18px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:18px;padding:18px;margin-bottom:12px}
+.big{font-size:44px;font-weight:700;letter-spacing:-1px}
+.mut{color:var(--mut);font-size:14px}
+.punch{width:100%;border:0;border-radius:18px;padding:22px;font-size:22px;font-weight:700;color:#fff;background:var(--ac);margin-bottom:12px}
+.punch.out{background:var(--ac2)}
+.row{display:flex;justify-content:space-between;align-items:center;padding:13px 4px;border-bottom:1px solid var(--bd);font-size:17px}
+.row:last-child{border:0}
+.row.today{font-weight:700;color:var(--ac)}
+.row.fut{opacity:.4}
+.row small{display:block;color:var(--mut);font-weight:400;font-size:12px}
+.row .d{display:flex;gap:10px;align-items:baseline}
+.wd{color:var(--mut);font-size:13px;width:34px;text-transform:capitalize;font-weight:400}
+.bar{height:10px;border-radius:6px;background:var(--bd);margin:10px 0;overflow:hidden}.bar i{display:block;height:100%;background:var(--ac)}.need{display:flex;justify-content:space-between;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--bd);font-size:16px}.need:last-child{border:0}.need b{font-size:22px}
+.link{background:none;border:0;color:var(--mut);text-decoration:underline;font-size:14px;width:100%;padding:10px}
+.md{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:20px;z-index:9}
+.md[hidden]{display:none}
+.box{background:var(--card);border-radius:18px;padding:20px;width:100%;max-width:400px}
+.box input,.box textarea{width:100%;font-size:20px;padding:12px;border-radius:12px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);margin:10px 0}
+.box textarea{font-size:12px;height:130px}
+.btns{display:flex;gap:8px}
+.btns button{flex:1;padding:13px;border-radius:12px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);font-size:16px}
+.btns .p{background:var(--ac);color:#fff;border:0}
+</style></head><body>
+<div id="app"></div>
+<div class="md" id="md" hidden><div class="box" id="mb"></div></div>
+<script>
+const KEY='sfp-v1',MES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+let S=null,vm=new Date(),cst='local',DOC=null,pt=null;vm=new Date(vm.getFullYear(),vm.getMonth(),1);
+try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+if(!S||!S.days){S={days:{},open:null,ts:0};
+ [300,300,400,300,360,330].forEach((m,i)=>S.days['2026-10-0'+(i+1)]={m:m,s:[]});try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+if(!S.goal)S.goal=140;
+function save(){S.ts=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}push()}
+function push(){if(!DOC)return;clearTimeout(pt);cst='sync';pt=setTimeout(async()=>{try{await DOC.set({json:JSON.stringify(S),ts:S.ts});cst='ok'}catch(e){cst='err'}render()},600)}
+async function initCloud(){try{const db=await claude.use('db'),u=await claude.use('user');if(!db||!u)return;const id=await u.id();if(!id)return;
+ DOC=db.collection('data/users/'+id).doc('sfp');const sn=await DOC.get();let c=null;
+ if(sn.exists)c=JSON.parse(sn.data().json);
+ if(c&&(c.ts||0)>(S.ts||0)){S=c;if(!S.goal)S.goal=140;try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}cst='ok'}else push()}catch(e){cst='err'}render()}
+const pad=n=>String(n).padStart(2,'0');
+const key=d=>{d=new Date(d);return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())};
+function dayMin(k,now){const d=S.days[k];let m=d?d.m||0:0;if(d)for(const s of d.s)m+=(s.o-s.i)/60000;
+ if(S.open&&key(S.open)==k)m+=(now-S.open)/60000;return m}
+function fmt(min){let h=Math.floor(min/60),m=Math.round(min%60);if(m==60){h++;m=0}if(!h&&!m)return '';return h+'h'+(m?m+'m':'')}
+function parse(t){t=t.trim().toLowerCase().replace(',','.');let m;
+ if(m=t.match(/^(\d+):(\d{1,2})$/))return +m[1]*60+ +m[2];
+ if(m=t.match(/^(\d+(?:\.\d+)?)\s*h(?:\s*(\d+)\s*m?)?$/))return Math.round(+m[1]*60)+(+m[2]||0);
+ if(m=t.match(/^(\d+)\s*m$/))return +m[1];
+ if(/^\d+(\.\d+)?$/.test(t))return Math.round(parseFloat(t)*60);return null}
+const hm=t=>new Date(t).toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit',hour12:false});
+function punch(){const now=Date.now();
+ if(S.open){const k=key(S.open);(S.days[k]=S.days[k]||{m:0,s:[]}).s.push({i:S.open,o:now});S.open=null}
+ else S.open=now;save();render()}
+function nav(n){vm=new Date(vm.getFullYear(),vm.getMonth()+n,1);render()}
+function render(){const now=Date.now(),y=vm.getFullYear(),mo=vm.getMonth(),n=new Date(y,mo+1,0).getDate(),tk=key(now);
+ let tot=0,dias=0,rows='';
+ for(let d=1;d<=n;d++){const k=y+'-'+pad(mo+1)+'-'+pad(d),m=dayMin(k,now);tot+=m;if(m>0)dias++;
+  const dt=new Date(y,mo,d),ss=(S.days[k]&&S.days[k].s.length)?S.days[k].s.map(s=>hm(s.i)+'–'+hm(s.o)).join(' · '):'';
+  rows+=`<div class="row ${k==tk?'today':''} ${k>tk?'fut':''}" onclick="openDay('${k}')"><div class="d"><span class="wd">${dt.toLocaleDateString('es',{weekday:'short'})}</span><span>${d}${ss?'<small>'+ss+'</small>':''}</span></div><span>${fmt(m)}</span></div>`}
+ const g=(S.goal||140)*60,rem=Math.max(0,g-tot),pct=Math.min(100,tot/g*100),t0=new Date(now);
+ const fromD=(y==t0.getFullYear()&&mo==t0.getMonth())?t0.getDate():(new Date(y,mo,1)>t0?1:n+1);
+ let dl=0,wl=0;for(let d=fromD;d<=n;d++){dl++;const w=new Date(y,mo,d).getDay();if(w>0&&w<6)wl++}
+ const need=c=>rem==0?'0h':(c?fmt(rem/c):'—');
+ const CS={local:'Solo en este teléfono',sync:'Sincronizando…',ok:'☁ Sincronizado con tu cuenta',err:'No se pudo sincronizar'};
+ let b;
+ if(S.open){const e=Math.floor((now-S.open)/1000);b=`<button class="punch out" onclick="punch()">Marcar salida<div style="font-size:14px;font-weight:400;margin-top:4px">Entraste a las ${hm(S.open)} · ${pad(Math.floor(e/3600))}:${pad(Math.floor(e/60)%60)}:${pad(e%60)}</div></button>`}
+ else b=`<button class="punch" onclick="punch()">Marcar entrada</button>`;
+ document.getElementById('app').innerHTML=`<div class="top"><button class="nb" onclick="nav(-1)">‹</button><b>${MES[mo]} ${y}</b><button class="nb" onclick="nav(1)">›</button></div>
+ ${b}<div class="card"><div class="mut">Total del mes</div><div class="big">${fmt(tot)||'0h'}</div><div class="mut">${dias} días con horas${dias?' · promedio '+fmt(tot/dias):''}</div></div>
+ <div class="card"><div class="mut">Te faltan</div><div class="big">${rem?fmt(rem):'¡Meta cumplida!'}</div><div class="bar"><i style="width:${pct}%"></i></div><div class="mut">Meta: ${S.goal}h al mes · <a style="text-decoration:underline" onclick="openGoal()">cambiar</a></div></div>
+ <div class="card"><div class="mut" style="margin-bottom:4px">Para llegar a la meta necesitas hacer</div>
+ <div class="need"><span>Solo lunes a viernes<br><span class="mut">${wl} días restantes</span></span><b>${need(wl)}/día</b></div>
+ <div class="need"><span>Todos los días<br><span class="mut">${dl} días restantes</span></span><b>${need(dl)}/día</b></div></div>
+ <div class="card" style="padding:8px 14px">${rows}</div><div class="mut" style="text-align:center">${CS[cst]}</div><button class="link" onclick="openBackup()">Respaldo de datos</button>`}
+function openDay(k){const v=fmt(dayMin(k,Date.now()));
+ mb.innerHTML=`<b>Editar ${k.split('-').reverse().join('/')}</b><input id="iv" value="${v}" placeholder="Ej: 5h30m" autocomplete="off"><div class="mut">Formatos: 5h, 5h30m, 45m, 5:30</div><div class="btns" style="margin-top:12px"><button onclick="closeM()">Cancelar</button><button onclick="saveDay('${k}',true)">Borrar</button><button class="p" onclick="saveDay('${k}')">Guardar</button></div>`;md.hidden=false}
+function saveDay(k,del){let m=del?0:parse(document.getElementById('iv').value);
+ if(m===null){document.getElementById('iv').style.borderColor='var(--ac2)';return}
+ if(m>0)S.days[k]={m:m,s:[]};else delete S.days[k];save();closeM();render()}
+function closeM(){md.hidden=true}
+function openBackup(){mb.innerHTML=`<b>Respaldo</b><div class="mut">Copia este texto y guárdalo en Notas. Para restaurar, pégalo aquí y toca Importar.</div><textarea id="bk">${JSON.stringify(S)}</textarea><div class="btns"><button onclick="closeM()">Cerrar</button><button class="p" onclick="imp()">Importar</button></div>`;md.hidden=false}
+function imp(){try{const d=JSON.parse(document.getElementById('bk').value);if(!d.days)throw 0;S=d;save();closeM();render()}catch(e){document.getElementById('bk').style.borderColor='var(--ac2)'}}
+const md=document.getElementById('md'),mb=document.getElementById('mb');
+function openGoal(){mb.innerHTML=`<b>Meta mensual (horas)</b><input id="ig" type="number" inputmode="decimal" value="${S.goal}"><div class="btns"><button onclick="closeM()">Cancelar</button><button class="p" onclick="saveGoal()">Guardar</button></div>`;md.hidden=false}
+function saveGoal(){const g=parseFloat(document.getElementById('ig').value);if(g>0){S.goal=g;save();closeM();render()}}
+render();initCloud();setInterval(()=>{if(S.open&&md.hidden)render()},1000);
+</script></body></html>

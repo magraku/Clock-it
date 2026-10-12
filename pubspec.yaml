@@ -1,0 +1,62 @@
+name: clock_it
+description: Clock it — cuenta tus horas de SFP.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.5.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_svg: ^2.0.10
+  shared_preferences: ^2.3.2
+  share_plus: ^10.1.4
+  file_picker: ^8.1.2
+  path_provider: ^2.1.4
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.14.1
+  flutter_native_splash: ^2.4.1
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+  fonts:
+    - family: SourceSans3
+      fonts:
+        - asset: assets/fonts/SourceSans3-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/SourceSans3-Semibold.ttf
+          weight: 600
+        - asset: assets/fonts/SourceSans3-Bold.ttf
+          weight: 700
+    - family: Anton
+      fonts:
+        - asset: assets/fonts/Anton-Regular.ttf
+    - family: Outfit
+      fonts:
+        - asset: assets/fonts/Outfit-Variable.ttf
+
+# `dart run flutter_launcher_icons`
+flutter_launcher_icons:
+  ios: true
+  android: true
+  image_path: assets/images/icon/app_icon.png
+  remove_alpha_ios: true
+  adaptive_icon_background: '#F3F0E6'
+  adaptive_icon_foreground: assets/images/icon/adaptive_foreground.png
+  min_sdk_android: 21
+
+# `dart run flutter_native_splash:create`
+flutter_native_splash:
+  color: '#F3F0E6'
+  image: assets/images/icon/splash_logo.png
+  android_12:
+    color: '#F3F0E6'
+    image: assets/images/icon/adaptive_foreground.png
+  fullscreen: false

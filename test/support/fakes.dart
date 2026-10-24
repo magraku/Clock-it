@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:clock_it/data/accounts.dart';
 import 'package:clock_it/data/hours_store.dart';
-import 'package:clock_it/models/hours_data.dart';
+import 'package:clock_it/models/goals.dart';
 import 'package:clock_it/state/session.dart';
 import 'package:clock_it/ui/strings.dart';
 
@@ -17,21 +17,21 @@ class FakeAccounts implements AccountService {
   @override
   Future<Account> logIn(String email, String password) async {
     final u = _users[email.trim()];
-    if (u == null || u.password != password) throw const AuthFailure(Str.authWrongCredentials);
+    if (u == null || u.password != password) throw AuthFailure(Str.authWrongCredentials);
     return current = Account(uid: u.uid, email: email.trim());
   }
 
   @override
   Future<Account> signUp(String email, String password) async {
-    if (!email.contains('@')) throw const AuthFailure(Str.authInvalidEmail);
-    if (_users.containsKey(email.trim())) throw const AuthFailure(Str.authEmailInUse);
-    if (password.length < 6) throw const AuthFailure(Str.authWeakPassword);
+    if (!email.contains('@')) throw AuthFailure(Str.authInvalidEmail);
+    if (_users.containsKey(email.trim())) throw AuthFailure(Str.authEmailInUse);
+    if (password.length < 6) throw AuthFailure(Str.authWeakPassword);
     _users[email.trim()] = (uid: 'uid-${_users.length}', password: password);
     return logIn(email, password);
   }
 
   @override
-  Future<void> sendPasswordReset(String email) async {}
+  Future<String> sendPasswordReset(String email) async => Str.resetSent;
 
   @override
   Future<void> logOut() async => current = null;
@@ -39,7 +39,7 @@ class FakeAccounts implements AccountService {
   @override
   Future<void> deleteAccount(String password) async {
     final email = current!.email;
-    if (_users[email]!.password != password) throw const AuthFailure(Str.authWrongCredentials);
+    if (_users[email]!.password != password) throw AuthFailure(Str.authWrongCredentials);
     _users.remove(email);
     current = null;
   }
@@ -51,16 +51,16 @@ class MemoryStore extends HoursStore {
 
   final Map<String, Map<String, dynamic>> cloud;
   final String uid;
-  final remote = StreamController<HoursData>.broadcast();
+  final remote = StreamController<UserData>.broadcast();
 
   @override
-  Future<HoursData?> load() async => cloud[uid] == null ? null : HoursData.fromJson(cloud[uid]!);
+  Future<UserData?> load() async => cloud[uid] == null ? null : UserData.fromJson(cloud[uid]!);
 
   @override
-  Future<void> save(HoursData data) async => cloud[uid] = data.toJson();
+  Future<void> save(UserData data) async => cloud[uid] = data.toJson();
 
   @override
-  Stream<HoursData> changes() => remote.stream;
+  Stream<UserData> changes() => remote.stream;
 }
 
 Services fakeServices(FakeAccounts accounts, Map<String, Map<String, dynamic>> cloud) => Services(

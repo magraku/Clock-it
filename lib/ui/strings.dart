@@ -88,7 +88,7 @@ abstract final class Str {
         'Se ve detrás de tus cronómetros. Guárdalo para ponerlo también en tu pantalla bloqueada.',
       );
   static List<String> get wallpaperNames => [
-        _t('Original', 'Original'),
+        _t('Flow', 'Marea'),
         _t('Paint drop', 'Gota de pintura'),
         _t('Dusk', 'Anochecer'),
         _t('Meadow', 'Pradera'),
@@ -118,7 +118,8 @@ abstract final class Str {
   static String get goalNameMissing => _t('Give your goal a name.', 'Ponle un nombre a tu meta.');
   static String get color => _t('Color', 'Color');
   static List<String> get colorNames =>
-      _es ? const ['Verde', 'Naranja', 'Rosa', 'Amarillo'] : const ['Green', 'Orange', 'Pink', 'Yellow'];
+      // In the order of GoalColor (green, orange, pink, yellow), painted with the plum palette.
+      _es ? const ['Turquesa', 'Lavanda', 'Rosa', 'Mantequilla'] : const ['Turquoise', 'Lavender', 'Pink', 'Butter'];
   static String get monthlyHours => _t('Monthly goal (hours)', 'Meta del mes (horas)');
   static String get showOnHome => _t('Show on Home', 'Mostrar en Inicio');
   static String get create => _t('Create', 'Crear');

@@ -4,10 +4,9 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import '../motion.dart';
 import '../theme.dart';
+import 'flow_background.dart';
 
 abstract final class Assets {
-  static const bgSoft = 'assets/images/bg_soft.jpg';
-  static const bgMain = 'assets/images/bg_main.jpg';
   static const paper = 'assets/images/calendar_paper.png';
   static const logo = 'assets/images/logo.svg';
 
@@ -66,26 +65,14 @@ class ShrinkToFit extends StatelessWidget {
       );
 }
 
-/// Full-bleed grainy gradient background.
+/// Full-bleed background of every screen: the moving plum marbling.
 class Backdrop extends StatelessWidget {
-  const Backdrop({super.key, required this.image, required this.child});
+  const Backdrop({super.key, required this.child});
 
-  final String image;
   final Widget child;
 
   @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        image: DecorationImage(
-          image: AssetImage(image),
-          fit: BoxFit.cover,
-          filterQuality: FilterQuality.medium,
-        ),
-      ),
-      child: child,
-    );
-  }
+  Widget build(BuildContext context) => FlowBackground(child: child);
 }
 
 class ClockItLogo extends StatelessWidget {
@@ -193,7 +180,7 @@ class _PressableState extends State<Pressable> {
                 position: DecorationPosition.foreground,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(widget.focusRadius),
-                  border: _focus ? Border.all(color: const Color(0xFF1F2E4D), width: 3) : null,
+                  border: _focus ? Border.all(color: Palette.inkDeep, width: 3) : null,
                 ),
                 child: label == null ? widget.child : ExcludeSemantics(child: widget.child),
               ),
@@ -243,18 +230,25 @@ class DesignButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.circular(radius),
+          boxShadow: Surface.shadow,
         ),
         alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: fontSize,
-                fontWeight: fontWeight,
-                color: textColor,
-                height: 1.05,
+            // One line; a long label shrinks instead of wrapping.
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                label,
+                maxLines: 1,
+                style: TextStyle(
+                  fontSize: fontSize,
+                  fontWeight: fontWeight,
+                  color: textColor,
+                  height: 1.05,
+                ),
               ),
             ),
             if (subtitle != null)

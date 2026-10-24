@@ -8,6 +8,7 @@ import '../sheets.dart';
 import '../strings.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
+import '../widgets/flow_background.dart';
 import 'main_shell.dart';
 
 /// Artboard of the first two screens in the design, in points.
@@ -53,7 +54,6 @@ class _SplashScreenState extends State<SplashScreen> {
     final state = account == null ? null : await services.open(account);
     if (!mounted) return;
     await Future.wait([
-      precacheImage(const AssetImage(Assets.bgMain), context),
       precacheImage(const AssetImage(Assets.paper), context),
       minimum,
     ]);
@@ -68,7 +68,7 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    precacheImage(const AssetImage(Assets.bgSoft), context);
+    FlowBackground.program.ignore(); // start compiling the background's shader
     // Warm up the SVG so the Hero flight doesn't flash.
     const loader = SvgAssetLoader(Assets.logo);
     svg.cache.putIfAbsent(loader.cacheKey(null), () => loader.loadBytes(null));
@@ -78,7 +78,6 @@ class _SplashScreenState extends State<SplashScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Backdrop(
-        image: Assets.bgSoft,
         child: DesignCanvas(
           size: _introSize,
           child: Stack(children: [
@@ -117,10 +116,9 @@ class WelcomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pink = Palette.pink.withValues(alpha: 0.75);
+    final pink = Palette.rose.withValues(alpha: Surface.alpha);
     return Scaffold(
       body: Backdrop(
-        image: Assets.bgSoft,
         child: DesignCanvas(
           size: _introSize,
           child: Stack(children: [

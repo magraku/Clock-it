@@ -131,7 +131,6 @@ class GoalsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Backdrop(
-      image: Assets.bgSoft,
       child: SafeArea(
         bottom: false,
         child: LayoutBuilder(builder: (context, c) {
@@ -161,14 +160,20 @@ class GoalsScreen extends StatelessWidget {
                         child: Stack(children: [
                           Positioned.fromRect(
                             rect: logo,
-                            child: ExcludeSemantics(child: SvgPicture.asset(Assets.logoScript)),
+                            // Cream handwriting on the dark background.
+                            child: ExcludeSemantics(
+                              child: SvgPicture.asset(
+                                Assets.logoScript,
+                                colorFilter: const ColorFilter.mode(Palette.cream, BlendMode.srcIn),
+                              ),
+                            ),
                           ),
                           Positioned.fromRect(
                             rect: _createButton,
                             child: Entrance(
                               child: DesignButton(
                                 label: Str.createGoal,
-                                color: Palette.pink.withValues(alpha: 0.8),
+                                color: Palette.rose.withValues(alpha: Surface.alpha),
                                 radius: 12.8,
                                 fontWeight: FontWeight.w600,
                                 onTap: () => _create(context),

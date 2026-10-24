@@ -18,7 +18,7 @@ class Hourglass extends StatefulWidget {
     required this.progress,
     required this.running,
     this.ready = false,
-    this.sand = Palette.navyDeep,
+    this.sand = Palette.inkDeep,
   });
 
   final HourglassStyle style;
@@ -128,7 +128,7 @@ class _HourglassPainter extends CustomPainter {
   final double flow;
   final bool falling;
 
-  static const _navy = Palette.navyDeep;
+  static const _ink = Palette.inkDeep;
   static const _cream = Color(0xFFF1E8D0);
 
   @override
@@ -148,7 +148,7 @@ class _HourglassPainter extends CustomPainter {
 
   /// The design's reference print: cream glass on a dark panel, dark sand.
   void _classic(Canvas canvas) {
-    final panel = Paint()..color = _navy;
+    final panel = Paint()..color = _ink;
     final glass = Paint()..color = _cream;
     canvas.drawRRect(RRect.fromLTRBR(0, 0, 100, 146, const Radius.circular(4)), panel);
     canvas.drawRect(const Rect.fromLTRB(4, 3, 96, 9), glass);
@@ -160,7 +160,7 @@ class _HourglassPainter extends CustomPainter {
 
   /// Two round glass bulbs between dark wooden caps and posts.
   void _crystal(Canvas canvas) {
-    final wood = Paint()..color = _navy;
+    final wood = Paint()..color = _ink;
     final body = Path.combine(
       PathOperation.union,
       Path()
@@ -175,7 +175,7 @@ class _HourglassPainter extends CustomPainter {
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2.4
-        ..color = _navy,
+        ..color = _ink,
     );
     // Shine on each bulb.
     final shine = Paint()
@@ -208,7 +208,7 @@ class _HourglassPainter extends CustomPainter {
       ..strokeWidth = 3.6
       ..strokeJoin = StrokeJoin.round
       ..strokeCap = StrokeCap.round
-      ..color = _navy;
+      ..color = _ink;
     canvas.drawPath(body, ink);
     canvas.drawLine(const Offset(6, 7), const Offset(94, 7), ink..strokeWidth = 5);
     canvas.drawLine(const Offset(6, 139), const Offset(94, 139), ink);
@@ -239,7 +239,7 @@ class _HourglassPainter extends CustomPainter {
     final ink = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.4
-      ..color = _navy;
+      ..color = _ink;
     canvas.drawPath(body, ink);
     canvas.drawLine(const Offset(8, 6), const Offset(92, 6), ink..strokeWidth = 4);
     canvas.drawLine(const Offset(8, 140), const Offset(92, 140), ink);

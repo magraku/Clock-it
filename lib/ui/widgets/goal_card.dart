@@ -121,7 +121,8 @@ class GoalCard extends StatelessWidget {
       semanticLabel: '${goal.name}${isHome ? ', ${Str.onHome}' : ''}',
       child: DecoratedBox(
         decoration: ShapeDecoration(
-          color: goal.color.color.withValues(alpha: 0.8),
+          color: goal.color.color.withValues(alpha: Surface.alpha),
+          shadows: Surface.shadow,
           shape: GoalCardBorder(shape: slot.shape, notch: slot.notch),
         ),
         child: Stack(children: [
@@ -137,7 +138,7 @@ class GoalCard extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 25,
                     fontWeight: FontWeight.w600,
-                    color: Palette.navyText,
+                    color: Palette.ink,
                     height: 0.92,
                   ),
                 ),
@@ -148,7 +149,7 @@ class GoalCard extends StatelessWidget {
             const Positioned(
               right: 9,
               bottom: 9,
-              child: Icon(Icons.home, color: Palette.navyText, size: 26),
+              child: Icon(Icons.home, color: Palette.ink, size: 26),
             ),
         ]),
       ),

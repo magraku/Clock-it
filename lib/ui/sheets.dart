@@ -45,15 +45,15 @@ Future<T?> _showSheet<T>(BuildContext context, WidgetBuilder builder) {
   );
 }
 
-const _title = TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: Palette.navy, height: 1.15);
-const _body = TextStyle(fontSize: 16, color: Palette.navy, height: 1.3);
-final _muted = TextStyle(fontSize: 14, color: Palette.navy.withValues(alpha: 0.65), height: 1.3);
+const _title = TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: Palette.ink, height: 1.15);
+const _body = TextStyle(fontSize: 16, color: Palette.ink, height: 1.3);
+final _muted = TextStyle(fontSize: 14, color: Palette.ink.withValues(alpha: 0.65), height: 1.3);
 
 class _SheetButton extends StatelessWidget {
   const _SheetButton(
     this.label, {
     required this.onTap,
-    this.color = Palette.green,
+    this.color = Palette.turquoise,
     this.filled = true,
     this.busy = false,
   });
@@ -99,7 +99,7 @@ class _LinkButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return TextButton(
       onPressed: onTap,
-      style: TextButton.styleFrom(foregroundColor: Palette.navy),
+      style: TextButton.styleFrom(foregroundColor: Palette.ink),
       child: Text(label, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
     );
   }
@@ -143,7 +143,7 @@ class _PasswordFieldState extends State<_PasswordField> {
         errorMaxLines: 3,
         suffixIcon: IconButton(
           tooltip: _hidden ? Str.showPassword : Str.hidePassword,
-          color: Palette.navy,
+          color: Palette.ink,
           icon: Icon(_hidden ? Icons.visibility_outlined : Icons.visibility_off_outlined),
           onPressed: () => setState(() => _hidden = !_hidden),
         ),
@@ -276,13 +276,13 @@ class _AccountSheetState extends State<_AccountSheet> {
           ),
           if (_notice != null) ...[
             const SizedBox(height: 10),
-            Text(_notice!, style: _body.copyWith(color: Palette.green, fontWeight: FontWeight.w600)),
+            Text(_notice!, style: _body.copyWith(color: Palette.turquoise, fontWeight: FontWeight.w600)),
           ],
           const SizedBox(height: 18),
           _SheetButton(
             _signUp ? Str.createAccount : Str.logIn,
             onTap: _submit,
-            color: Palette.pink,
+            color: Palette.rose,
             busy: _busy,
           ),
           const SizedBox(height: 6),
@@ -354,7 +354,7 @@ class _DeleteAccountSheetState extends State<_DeleteAccountSheet> {
           child: _PasswordField(controller: _password, newPassword: false, onSubmitted: _delete, errorText: _error),
         ),
         const SizedBox(height: 18),
-        _SheetButton(Str.deleteAccount, onTap: _delete, color: Palette.coral, busy: _busy),
+        _SheetButton(Str.deleteAccount, onTap: _delete, color: Palette.berry, busy: _busy),
       ],
     );
   }
@@ -461,7 +461,7 @@ class _DaySheetState extends State<_DaySheet> {
             onChanged: (_) {
               if (_error != null) setState(() => _error = null);
             },
-            style: const TextStyle(fontSize: 22, color: Palette.navy, fontWeight: FontWeight.w600),
+            style: const TextStyle(fontSize: 22, color: Palette.ink, fontWeight: FontWeight.w600),
             decoration: InputDecoration(hintText: Str.durationHint, errorText: _error),
           ),
         ),
@@ -474,7 +474,7 @@ class _DaySheetState extends State<_DaySheet> {
         const SizedBox(height: 20),
         Row(children: [
           if (entry != null) ...[
-            Expanded(child: _SheetButton(Str.delete, onTap: _delete, color: Palette.coral, filled: false)),
+            Expanded(child: _SheetButton(Str.delete, onTap: _delete, color: Palette.berry, filled: false)),
             const SizedBox(width: 12),
           ],
           Expanded(child: _SheetButton(Str.save, onTap: _save)),
@@ -547,7 +547,7 @@ class _GoalSheetState extends State<_GoalSheet> {
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             textInputAction: TextInputAction.done,
             onSubmitted: (_) => _save(),
-            style: const TextStyle(fontSize: 22, color: Palette.navy, fontWeight: FontWeight.w600),
+            style: const TextStyle(fontSize: 22, color: Palette.ink, fontWeight: FontWeight.w600),
             decoration: InputDecoration(hintText: Str.goalHint, suffixText: 'h', errorText: _error),
           ),
         ),
@@ -575,7 +575,7 @@ Future<void> showMenuSheet(
   final choice = await _showSheet<String>(context, (c) {
     Widget item(IconData icon, String label, String value) => ListTile(
           contentPadding: EdgeInsets.zero,
-          leading: Icon(icon, color: Palette.navy),
+          leading: Icon(icon, color: Palette.ink),
           title: Text(label, style: _body.copyWith(fontSize: 18)),
           onTap: () => Navigator.pop(c, value),
         );
@@ -657,7 +657,7 @@ class _GoalEditorState extends State<_GoalEditor> {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(Str.lastGoal),
         behavior: SnackBarBehavior.floating,
-        backgroundColor: Palette.navy,
+        backgroundColor: Palette.ink,
       ));
       return;
     }
@@ -717,9 +717,9 @@ class _GoalEditorState extends State<_GoalEditor> {
                     decoration: BoxDecoration(
                       color: c.color.withValues(alpha: 0.85),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: c == _color ? Palette.navy : Colors.transparent, width: 2.5),
+                      border: Border.all(color: c == _color ? Palette.ink : Colors.transparent, width: 2.5),
                     ),
-                    child: c == _color ? const Icon(Icons.check, color: Palette.navy) : null,
+                    child: c == _color ? const Icon(Icons.check, color: Palette.ink) : null,
                   ),
                 ),
               ),
@@ -745,14 +745,14 @@ class _GoalEditorState extends State<_GoalEditor> {
           value: _home,
           // Home always shows some goal: pick another one instead of switching it off.
           onChanged: wasHome ? null : (v) => setState(() => _home = v),
-          activeTrackColor: Palette.green,
-          secondary: const Icon(Icons.home_outlined, color: Palette.navy),
+          activeTrackColor: Palette.turquoise,
+          secondary: const Icon(Icons.home_outlined, color: Palette.ink),
           title: Text(Str.showOnHome, style: _body.copyWith(fontSize: 17)),
         ),
         const SizedBox(height: 14),
         Row(children: [
           if (_goal != null) ...[
-            Expanded(child: _SheetButton(Str.deleteGoal, onTap: _delete, color: Palette.coral, filled: false)),
+            Expanded(child: _SheetButton(Str.deleteGoal, onTap: _delete, color: Palette.berry, filled: false)),
             const SizedBox(width: 12),
           ],
           Expanded(child: _SheetButton(_goal == null ? Str.create : Str.save, onTap: _save)),
@@ -834,7 +834,7 @@ class _WallpaperSheetState extends State<_WallpaperSheet> {
                         padding: const EdgeInsets.all(3),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(13),
-                          border: Border.all(color: selected ? Palette.navy : Colors.transparent, width: 2.5),
+                          border: Border.all(color: selected ? Palette.ink : Colors.transparent, width: 2.5),
                         ),
                         child: WallpaperSwatch(style: style),
                       ),
@@ -843,7 +843,7 @@ class _WallpaperSheetState extends State<_WallpaperSheet> {
                         name,
                         style: TextStyle(
                           fontSize: 13,
-                          color: Palette.navy,
+                          color: Palette.ink,
                           fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
                         ),
                       ),
@@ -853,7 +853,7 @@ class _WallpaperSheetState extends State<_WallpaperSheet> {
               ),
             ),
             const SizedBox(height: 18),
-            _SheetButton(Str.saveWallpaper, onTap: _save, color: Palette.navy, busy: _saving),
+            _SheetButton(Str.saveWallpaper, onTap: _save, color: Palette.ink, busy: _saving),
           ],
         );
       },
@@ -878,7 +878,7 @@ class _BackupSheet extends StatelessWidget {
     messenger.showSnackBar(SnackBar(
       content: Text(msg),
       behavior: SnackBarBehavior.floating,
-      backgroundColor: Palette.navy,
+      backgroundColor: Palette.ink,
     ));
   }
 
@@ -940,13 +940,13 @@ class _BackupSheet extends StatelessWidget {
         Row(children: [
           Expanded(child: Builder(builder: (c) => _SheetButton(Str.exportFile, onTap: () => _export(c)))),
           const SizedBox(width: 12),
-          Expanded(child: _SheetButton(Str.copyJson, onTap: () => _copy(context), color: Palette.navy, filled: false)),
+          Expanded(child: _SheetButton(Str.copyJson, onTap: () => _copy(context), color: Palette.ink, filled: false)),
         ]),
         const SizedBox(height: 12),
         Row(children: [
-          Expanded(child: _SheetButton(Str.importFile, onTap: () => _importFile(context), color: Palette.navy)),
+          Expanded(child: _SheetButton(Str.importFile, onTap: () => _importFile(context), color: Palette.ink)),
           const SizedBox(width: 12),
-          Expanded(child: _SheetButton(Str.pasteJson, onTap: () => _paste(context), color: Palette.navy, filled: false)),
+          Expanded(child: _SheetButton(Str.pasteJson, onTap: () => _paste(context), color: Palette.ink, filled: false)),
         ]),
       ],
     );

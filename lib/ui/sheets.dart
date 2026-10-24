@@ -9,15 +9,20 @@ import 'package:share_plus/share_plus.dart';
 
 import '../data/accounts.dart';
 import '../logic/time_math.dart';
+import '../models/goals.dart';
 import '../state/app_state.dart';
 import '../state/session.dart';
+import 'motion.dart';
 import 'strings.dart';
 import 'theme.dart';
 import 'widgets/common.dart';
+import 'widgets/wallpaper.dart';
 
 Future<T?> _showSheet<T>(BuildContext context, WidgetBuilder builder) {
   return showModalBottomSheet<T>(
     context: context,
+    // Above the bottom bar, also from inside the Goals tab.
+    useRootNavigator: true,
     isScrollControlled: true,
     showDragHandle: true,
     backgroundColor: Palette.cream,
@@ -63,7 +68,7 @@ class _SheetButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fg = filled ? Colors.white : color;
+    final fg = filled ? onColor(color) : color;
     return Pressable(
       onTap: busy ? null : onTap,
       semanticLabel: label,
@@ -132,11 +137,12 @@ class _PasswordFieldState extends State<_PasswordField> {
       onSubmitted: (_) => widget.onSubmitted(),
       style: _body.copyWith(fontSize: 18),
       decoration: InputDecoration(
-        hintText: widget.newPassword ? Str.passwordHint : Str.password,
+        labelText: Str.password,
+        hintText: widget.newPassword ? Str.passwordHint : null,
         errorText: widget.errorText,
         errorMaxLines: 3,
         suffixIcon: IconButton(
-          tooltip: Str.password,
+          tooltip: _hidden ? Str.showPassword : Str.hidePassword,
           color: Palette.navy,
           icon: Icon(_hidden ? Icons.visibility_outlined : Icons.visibility_off_outlined),
           onPressed: () => setState(() => _hidden = !_hidden),
@@ -221,8 +227,8 @@ class _AccountSheetState extends State<_AccountSheet> {
     }
     setState(() => _busy = true);
     try {
-      await widget.services.accounts.sendPasswordReset(email);
-      if (mounted) setState(() => _notice = Str.resetSent);
+      final notice = await widget.services.accounts.sendPasswordReset(email);
+      if (mounted) setState(() => _notice = notice);
     } on Object catch (e) {
       if (mounted) setState(() => _error = e is AuthFailure ? e.message : Str.authGeneric);
     } finally {
@@ -256,14 +262,17 @@ class _AccountSheetState extends State<_AccountSheet> {
             autofillHints: const [AutofillHints.email],
             textInputAction: TextInputAction.next,
             style: _body.copyWith(fontSize: 18),
-            decoration: const InputDecoration(hintText: Str.email),
+            decoration: InputDecoration(labelText: Str.email),
           ),
           const SizedBox(height: 12),
-          _PasswordField(
-            controller: _password,
-            newPassword: _signUp,
-            onSubmitted: _submit,
-            errorText: _error,
+          Shake(
+            trigger: _error,
+            child: _PasswordField(
+              controller: _password,
+              newPassword: _signUp,
+              onSubmitted: _submit,
+              errorText: _error,
+            ),
           ),
           if (_notice != null) ...[
             const SizedBox(height: 10),
@@ -336,11 +345,14 @@ class _DeleteAccountSheetState extends State<_DeleteAccountSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text(Str.deleteAccount, style: _title),
+        Text(Str.deleteAccount, style: _title),
         const SizedBox(height: 8),
         Text(Str.deleteAccountHelp, style: _muted),
         const SizedBox(height: 18),
-        _PasswordField(controller: _password, newPassword: false, onSubmitted: _delete, errorText: _error),
+        Shake(
+          trigger: _error,
+          child: _PasswordField(controller: _password, newPassword: false, onSubmitted: _delete, errorText: _error),
+        ),
         const SizedBox(height: 18),
         _SheetButton(Str.deleteAccount, onTap: _delete, color: Palette.coral, busy: _busy),
       ],
@@ -350,13 +362,14 @@ class _DeleteAccountSheetState extends State<_DeleteAccountSheet> {
 
 // ── Day ──────────────────────────────────────────────────────────────────────
 
-Future<void> showDaySheet(BuildContext context, AppState state, DateTime date) =>
-    _showSheet(context, (_) => _DaySheet(state: state, date: date));
+Future<void> showDaySheet(BuildContext context, AppState state, String goalId, DateTime date) =>
+    _showSheet(context, (_) => _DaySheet(state: state, goalId: goalId, date: date));
 
 class _DaySheet extends StatefulWidget {
-  const _DaySheet({required this.state, required this.date});
+  const _DaySheet({required this.state, required this.goalId, required this.date});
 
   final AppState state;
+  final String goalId;
   final DateTime date;
 
   @override
@@ -365,7 +378,7 @@ class _DaySheet extends StatefulWidget {
 
 class _DaySheetState extends State<_DaySheet> {
   late final String _key = dayKey(widget.date);
-  late final String _initial = fmtHours(widget.state.savedMinutes(_key));
+  late final String _initial = fmtHours(widget.state.savedMinutes(widget.goalId, _key));
   late final TextEditingController _ctrl = TextEditingController(text: _initial);
   String? _error;
 
@@ -383,27 +396,28 @@ class _DaySheetState extends State<_DaySheet> {
       setState(() => _error = Str.invalidDuration);
       return;
     }
-    widget.state.setDay(_key, minutes);
+    widget.state.setDay(widget.goalId, _key, minutes);
     Navigator.pop(context);
   }
 
   void _delete() {
-    widget.state.setDay(_key, 0);
+    widget.state.setDay(widget.goalId, _key, 0);
     Navigator.pop(context);
   }
 
   @override
   Widget build(BuildContext context) {
     final d = widget.date;
-    final entry = widget.state.data.days[_key];
+    final hours = widget.state.goal(widget.goalId).hours;
+    final entry = hours.days[_key];
     final sessions = entry?.sessions ?? const [];
-    final open = widget.state.data.openSince;
+    final open = hours.openSince;
     final runningHere = open != null && dayKeyOf(open) == _key;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text('${Str.weekdaysLong[d.weekday - 1]}, ${Str.monthsLong[d.month - 1]} ${d.day}', style: _title),
+        Text(Str.fullDate(d), style: _title),
         const SizedBox(height: 18),
         if (sessions.isNotEmpty) ...[
           Text(Str.sessions, style: _muted),
@@ -422,7 +436,7 @@ class _DaySheetState extends State<_DaySheet> {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: Row(children: [
-                const Text(Str.manual, style: _body),
+                Text(Str.manual, style: _body),
                 const Spacer(),
                 Text(fmtHours(entry!.manualMinutes.toDouble()),
                     style: _body.copyWith(fontWeight: FontWeight.w600)),
@@ -436,17 +450,20 @@ class _DaySheetState extends State<_DaySheet> {
         ],
         Text(Str.hoursThatDay, style: _muted),
         const SizedBox(height: 6),
-        TextField(
-          controller: _ctrl,
-          autocorrect: false,
-          enableSuggestions: false,
-          textInputAction: TextInputAction.done,
-          onSubmitted: (_) => _save(),
-          onChanged: (_) {
-            if (_error != null) setState(() => _error = null);
-          },
-          style: const TextStyle(fontSize: 22, color: Palette.navy, fontWeight: FontWeight.w600),
-          decoration: InputDecoration(hintText: Str.durationHint, errorText: _error),
+        Shake(
+          trigger: _error,
+          child: TextField(
+            controller: _ctrl,
+            autocorrect: false,
+            enableSuggestions: false,
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) => _save(),
+            onChanged: (_) {
+              if (_error != null) setState(() => _error = null);
+            },
+            style: const TextStyle(fontSize: 22, color: Palette.navy, fontWeight: FontWeight.w600),
+            decoration: InputDecoration(hintText: Str.durationHint, errorText: _error),
+          ),
         ),
         const SizedBox(height: 8),
         Text(Str.formats, style: _muted),
@@ -469,13 +486,17 @@ class _DaySheetState extends State<_DaySheet> {
 
 // ── Goal ─────────────────────────────────────────────────────────────────────
 
-Future<void> showGoalSheet(BuildContext context, AppState state) =>
-    _showSheet(context, (_) => _GoalSheet(state: state));
+/// Monthly target of one goal, with the hours per day it takes. [month]
+/// is the one on screen.
+Future<void> showGoalSheet(BuildContext context, AppState state, String goalId, DateTime month) =>
+    _showSheet(context, (_) => _GoalSheet(state: state, goalId: goalId, month: month));
 
 class _GoalSheet extends StatefulWidget {
-  const _GoalSheet({required this.state});
+  const _GoalSheet({required this.state, required this.goalId, required this.month});
 
   final AppState state;
+  final String goalId;
+  final DateTime month;
 
   @override
   State<_GoalSheet> createState() => _GoalSheetState();
@@ -483,7 +504,7 @@ class _GoalSheet extends StatefulWidget {
 
 class _GoalSheetState extends State<_GoalSheet> {
   late final TextEditingController _ctrl = TextEditingController(
-    text: _trim(widget.state.data.goalHours),
+    text: _trim(widget.state.goal(widget.goalId).hours.goalHours),
   );
   String? _error;
 
@@ -501,13 +522,13 @@ class _GoalSheetState extends State<_GoalSheet> {
       setState(() => _error = Str.invalidGoal);
       return;
     }
-    widget.state.setGoal(v);
+    widget.state.setGoalHours(widget.goalId, v);
     Navigator.pop(context);
   }
 
   @override
   Widget build(BuildContext context) {
-    final summary = widget.state.summary;
+    final summary = widget.state.summary(widget.goalId, widget.month);
     String need(int days) {
       final v = summary.needPerDay(days);
       return v == null ? '—' : fmtPerDay(v);
@@ -516,16 +537,19 @@ class _GoalSheetState extends State<_GoalSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text(Str.monthlyGoal, style: _title),
+        Text('${Str.monthlyGoal} · ${widget.state.goal(widget.goalId).name}', style: _title),
         const SizedBox(height: 18),
-        TextField(
-          controller: _ctrl,
-          autofocus: true,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          textInputAction: TextInputAction.done,
-          onSubmitted: (_) => _save(),
-          style: const TextStyle(fontSize: 22, color: Palette.navy, fontWeight: FontWeight.w600),
-          decoration: InputDecoration(hintText: Str.goalHint, suffixText: 'h', errorText: _error),
+        Shake(
+          trigger: _error,
+          child: TextField(
+            controller: _ctrl,
+            autofocus: true,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) => _save(),
+            style: const TextStyle(fontSize: 22, color: Palette.navy, fontWeight: FontWeight.w600),
+            decoration: InputDecoration(hintText: Str.goalHint, suffixText: 'h', errorText: _error),
+          ),
         ),
         const SizedBox(height: 14),
         Text('${Str.monFri}: ${need(summary.weekdaysLeft)}/day · ${Str.everyday}: ${need(summary.daysLeft)}/day',
@@ -540,11 +564,13 @@ class _GoalSheetState extends State<_GoalSheet> {
 
 // ── Menu ─────────────────────────────────────────────────────────────────────
 
+/// The calendar's "•••": things about the goal on screen.
 Future<void> showMenuSheet(
   BuildContext context,
-  AppState state, {
-  required VoidCallback onLogOut,
-  required VoidCallback onDeleteAccount,
+  AppState state,
+  String goalId, {
+  required DateTime month,
+  required VoidCallback onToday,
 }) async {
   final choice = await _showSheet<String>(context, (c) {
     Widget item(IconData icon, String label, String value) => ListTile(
@@ -553,29 +579,285 @@ Future<void> showMenuSheet(
           title: Text(label, style: _body.copyWith(fontSize: 18)),
           onTap: () => Navigator.pop(c, value),
         );
-    final email = state.account?.email ?? '';
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, mainAxisSize: MainAxisSize.min, children: [
-      if (email.isNotEmpty) Text(email, style: _muted, overflow: TextOverflow.ellipsis),
+      Text(state.goal(goalId).name, style: _muted, overflow: TextOverflow.ellipsis),
       item(Icons.today_outlined, Str.today, 'today'),
       item(Icons.flag_outlined, Str.changeGoal, 'goal'),
-      item(Icons.save_alt_outlined, Str.backup, 'backup'),
-      const Divider(height: 12),
-      item(Icons.logout, Str.logOut, 'logout'),
-      item(Icons.person_remove_outlined, Str.deleteAccount, 'delete'),
+      item(Icons.edit_outlined, Str.editGoal, 'edit'),
     ]);
   });
   if (!context.mounted) return;
   switch (choice) {
     case 'today':
-      state.goToToday();
+      onToday();
     case 'goal':
-      await showGoalSheet(context, state);
-    case 'backup':
-      await showBackupSheet(context, state);
-    case 'logout':
-      onLogOut();
-    case 'delete':
-      onDeleteAccount();
+      await showGoalSheet(context, state, goalId, month);
+    case 'edit':
+      await showGoalEditor(context, state, goal: state.goal(goalId));
+  }
+}
+
+// ── Goal editor ──────────────────────────────────────────────────────────────
+
+/// Creates a goal ([goal] null) or edits one. Returns the new goal.
+Future<Goal?> showGoalEditor(BuildContext context, AppState state, {Goal? goal}) =>
+    _showSheet<Goal>(context, (_) => _GoalEditor(state: state, goal: goal));
+
+class _GoalEditor extends StatefulWidget {
+  const _GoalEditor({required this.state, this.goal});
+
+  final AppState state;
+  final Goal? goal;
+
+  @override
+  State<_GoalEditor> createState() => _GoalEditorState();
+}
+
+class _GoalEditorState extends State<_GoalEditor> {
+  late final Goal? _goal = widget.goal;
+  late final _name = TextEditingController(text: _goal?.name ?? '');
+  late final _hours = TextEditingController(
+    text: _GoalSheetState._trim(_goal?.hours.goalHours ?? Goal.defaultHours),
+  );
+  late GoalColor _color = _goal?.color ?? _nextColor();
+  late bool _home = _goal != null && widget.state.home.id == _goal.id;
+  String? _nameError;
+  String? _hoursError;
+
+  /// New goals take the color that comes next in the design's order.
+  GoalColor _nextColor() => GoalColor.values[widget.state.goals.length % GoalColor.values.length];
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _hours.dispose();
+    super.dispose();
+  }
+
+  void _save() {
+    final name = _name.text.trim();
+    final hours = double.tryParse(_hours.text.trim().replaceAll(',', '.'));
+    setState(() {
+      _nameError = name.isEmpty ? Str.goalNameMissing : null;
+      _hoursError = hours == null || hours <= 0 ? Str.invalidGoal : null;
+    });
+    if (_nameError != null || _hoursError != null) return;
+    final g = _goal;
+    if (g == null) {
+      Navigator.pop(context, widget.state.createGoal(name, _color, hours!, makeHome: _home));
+    } else {
+      widget.state.updateGoal(g.id, name: name, color: _color, monthlyHours: hours, makeHome: _home);
+      Navigator.pop(context);
+    }
+  }
+
+  Future<void> _delete() async {
+    final g = _goal!;
+    if (widget.state.goals.length < 2) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(Str.lastGoal),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: Palette.navy,
+      ));
+      return;
+    }
+    final ok = await showAdaptiveDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog.adaptive(
+        content: Text(Str.deleteGoalConfirm(g.name)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(c, false), child: Text(Str.cancel)),
+          TextButton(onPressed: () => Navigator.pop(c, true), child: Text(Str.delete)),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    widget.state.deleteGoal(g.id);
+    Navigator.pop(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final wasHome = _goal != null && widget.state.home.id == _goal.id;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(_goal == null ? Str.newGoal : Str.editGoal, style: _title),
+        const SizedBox(height: 18),
+        Text(Str.goalName, style: _muted),
+        const SizedBox(height: 6),
+        Shake(
+          trigger: _nameError,
+          child: TextField(
+            controller: _name,
+            autofocus: _goal == null,
+            textCapitalization: TextCapitalization.words,
+            textInputAction: TextInputAction.next,
+            style: _body.copyWith(fontSize: 18),
+            decoration: InputDecoration(hintText: Str.goalNameHint, errorText: _nameError),
+          ),
+        ),
+        const SizedBox(height: 14),
+        Text(Str.color, style: _muted),
+        const SizedBox(height: 8),
+        Row(children: [
+          for (final c in GoalColor.values)
+            Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: Semantics(
+                label: Str.colorNames[c.index],
+                selected: c == _color,
+                button: true,
+                child: GestureDetector(
+                  onTap: () => setState(() => _color = c),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: c.color.withValues(alpha: 0.85),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: c == _color ? Palette.navy : Colors.transparent, width: 2.5),
+                    ),
+                    child: c == _color ? const Icon(Icons.check, color: Palette.navy) : null,
+                  ),
+                ),
+              ),
+            ),
+        ]),
+        const SizedBox(height: 14),
+        Text(Str.monthlyHours, style: _muted),
+        const SizedBox(height: 6),
+        Shake(
+          trigger: _hoursError,
+          child: TextField(
+            controller: _hours,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) => _save(),
+            style: _body.copyWith(fontSize: 18),
+            decoration: InputDecoration(hintText: Str.goalHint, suffixText: 'h', errorText: _hoursError),
+          ),
+        ),
+        const SizedBox(height: 4),
+        SwitchListTile.adaptive(
+          contentPadding: EdgeInsets.zero,
+          value: _home,
+          // Home always shows some goal: pick another one instead of switching it off.
+          onChanged: wasHome ? null : (v) => setState(() => _home = v),
+          activeTrackColor: Palette.green,
+          secondary: const Icon(Icons.home_outlined, color: Palette.navy),
+          title: Text(Str.showOnHome, style: _body.copyWith(fontSize: 17)),
+        ),
+        const SizedBox(height: 14),
+        Row(children: [
+          if (_goal != null) ...[
+            Expanded(child: _SheetButton(Str.deleteGoal, onTap: _delete, color: Palette.coral, filled: false)),
+            const SizedBox(width: 12),
+          ],
+          Expanded(child: _SheetButton(_goal == null ? Str.create : Str.save, onTap: _save)),
+        ]),
+      ],
+    );
+  }
+}
+
+// ── Wallpaper ────────────────────────────────────────────────────────────────
+
+/// Picks the focus screen's background; the chosen one can be saved to the
+/// phone (the share sheet's "Save image") to set it on the lock screen.
+Future<void> showWallpaperSheet(BuildContext context, AppState state) =>
+    _showSheet(context, (_) => _WallpaperSheet(state: state));
+
+class _WallpaperSheet extends StatefulWidget {
+  const _WallpaperSheet({required this.state});
+
+  final AppState state;
+
+  @override
+  State<_WallpaperSheet> createState() => _WallpaperSheetState();
+}
+
+class _WallpaperSheetState extends State<_WallpaperSheet> {
+  bool _saving = false;
+
+  Future<void> _save() async {
+    final box = context.findRenderObject() as RenderBox?;
+    final origin = box == null ? null : box.localToGlobal(Offset.zero) & box.size;
+    setState(() => _saving = true);
+    try {
+      final style = widget.state.wallpaper;
+      final png = await wallpaperPng(style);
+      await Share.shareXFiles(
+        [XFile.fromData(png, mimeType: 'image/png', name: 'clock-it-${style.name}.png')],
+        sharePositionOrigin: origin,
+      );
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: widget.state,
+      builder: (context, _) {
+        final current = widget.state.wallpaper;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(Str.wallpaper, style: _title),
+            const SizedBox(height: 8),
+            Text(Str.wallpaperHelp, style: _muted),
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 168,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: WallpaperStyle.values.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 12),
+                itemBuilder: (context, i) {
+                  final style = WallpaperStyle.values[i];
+                  final selected = style == current;
+                  final name = Str.wallpaperNames[i];
+                  return Pressable(
+                    onTap: () => widget.state.setWallpaper(style),
+                    selected: selected,
+                    focusRadius: 12,
+                    semanticLabel: Str.wallpaperOption(name),
+                    child: Column(children: [
+                      AnimatedContainer(
+                        duration: Motion.standard,
+                        curve: Motion.ease,
+                        width: 66,
+                        height: 140,
+                        padding: const EdgeInsets.all(3),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(13),
+                          border: Border.all(color: selected ? Palette.navy : Colors.transparent, width: 2.5),
+                        ),
+                        child: WallpaperSwatch(style: style),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        name,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Palette.navy,
+                          fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
+                        ),
+                      ),
+                    ]),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 18),
+            _SheetButton(Str.saveWallpaper, onTap: _save, color: Palette.navy, busy: _saving),
+          ],
+        );
+      },
+    );
   }
 }
 
@@ -635,10 +917,10 @@ class _BackupSheet extends StatelessWidget {
     final ok = await showAdaptiveDialog<bool>(
       context: context,
       builder: (c) => AlertDialog.adaptive(
-        content: const Text(Str.importConfirm),
+        content: Text(Str.importConfirm),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(c, false), child: const Text(Str.cancel)),
-          TextButton(onPressed: () => Navigator.pop(c, true), child: const Text(Str.replace)),
+          TextButton(onPressed: () => Navigator.pop(c, false), child: Text(Str.cancel)),
+          TextButton(onPressed: () => Navigator.pop(c, true), child: Text(Str.replace)),
         ],
       ),
     );
@@ -651,7 +933,7 @@ class _BackupSheet extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text(Str.backup, style: _title),
+        Text(Str.backup, style: _title),
         const SizedBox(height: 10),
         Text(Str.backupHelp, style: _muted),
         const SizedBox(height: 20),

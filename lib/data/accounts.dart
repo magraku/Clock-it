@@ -25,7 +25,9 @@ abstract class AccountService {
   Future<Account?> restore();
   Future<Account> logIn(String email, String password);
   Future<Account> signUp(String email, String password);
-  Future<void> sendPasswordReset(String email);
+
+  /// Returns the message to show the person.
+  Future<String> sendPasswordReset(String email);
   Future<void> logOut();
 
   /// Asks for the password again, as a deleted account can't be undone.
@@ -61,8 +63,10 @@ class FirebaseAccountService implements AccountService {
       });
 
   @override
-  Future<void> sendPasswordReset(String email) =>
-      _guard(() => _auth.sendPasswordResetEmail(email: email.trim()));
+  Future<String> sendPasswordReset(String email) => _guard(() async {
+        await _auth.sendPasswordResetEmail(email: email.trim());
+        return Str.resetSent;
+      });
 
   @override
   Future<void> logOut() => _auth.signOut();

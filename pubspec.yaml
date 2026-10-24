@@ -9,14 +9,20 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   flutter_svg: ^2.0.10
   shared_preferences: ^2.3.2
   share_plus: ^10.1.4
   file_picker: ^8.1.2
   path_provider: ^2.1.4
   firebase_core: 4.10.0 # 4.11+ needs Xcode 16.3
+  # 7.1 expects a field the 4.10 native side doesn't send: startup fails.
+  firebase_core_platform_interface: '>=7.0.1 <7.1.0'
   firebase_auth: ^6.5.2
   cloud_firestore: ^6.5.0
+  flutter_local_notifications: ^22.3.2
+  timezone: ^0.11.2
 
 dev_dependencies:
   flutter_test:
@@ -51,7 +57,7 @@ flutter_launcher_icons:
   android: true
   image_path: assets/images/icon/app_icon.png
   remove_alpha_ios: true
-  adaptive_icon_background: '#F3F0E6'
+  adaptive_icon_background: '#A4D266' # green at 80% on white, like the design's icon
   adaptive_icon_foreground: assets/images/icon/adaptive_foreground.png
   min_sdk_android: 21
 

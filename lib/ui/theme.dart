@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
 
+import '../models/goals.dart';
+
 /// Colors taken from `reference/Clock-it.vectorcraft` (CMYK converted to RGB).
+/// Text that reads on [background]: white on dark colours, navy on light
+/// ones (the design's pastel buttons are light, so white text fails there).
+Color onColor(Color background) =>
+    ThemeData.estimateBrightnessForColor(background) == Brightness.dark ? Colors.white : Palette.navyText;
+
 abstract final class Palette {
   static const navy = Color(0xFF32486D); // big numbers, "JAN", grid
   static const navyText = Color(0xFF32466C); // "Hours left to do:"
@@ -12,7 +19,19 @@ abstract final class Palette {
   static const orange = Color(0xFFFAAF3C); // days with hours
   static const sand = Color(0xFFDDD5CE); // text on the goal card
   static const cream = Color(0xFFF3F0E6); // splash background, sheets
-  static const coral = Color(0xFFD9604A); // destructive actions
+  static const coral = Color(0xFFB8432F); // destructive actions (5.4:1 under white text)
+}
+
+extension GoalColorPaint on GoalColor {
+  Color get color => switch (this) {
+        GoalColor.green => Palette.green,
+        GoalColor.orange => Palette.orange,
+        GoalColor.pink => Palette.pink,
+        GoalColor.yellow => Palette.yellow,
+      };
+
+  /// Chips and boxes sit in yellow, except on a yellow goal.
+  Color get accent => this == GoalColor.yellow ? Palette.pink : Palette.yellow;
 }
 
 abstract final class Fonts {

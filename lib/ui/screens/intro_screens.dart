@@ -3,11 +3,12 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../state/app_state.dart';
 import '../../state/session.dart';
+import '../motion.dart';
 import '../sheets.dart';
 import '../strings.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
-import 'home_screen.dart';
+import 'main_shell.dart';
 
 /// Artboard of the first two screens in the design, in points.
 const _introSize = Size(314, 619);
@@ -23,7 +24,7 @@ Route<void> fadeRoute(Widget page) => PageRouteBuilder(
 /// Opens the main screen for a signed-in account.
 void goHome(BuildContext context, Services services, AppState state) {
   Navigator.of(context).pushAndRemoveUntil(
-    fadeRoute(HomeScreen(services: services, state: state)),
+    fadeRoute(MainShell(services: services, state: state)),
     (_) => false,
   );
 }
@@ -129,11 +130,15 @@ class WelcomeScreen extends StatelessWidget {
               top: 414.6,
               width: 243.3,
               height: 46.6,
-              child: DesignButton(
-                label: Str.logIn,
-                color: pink,
-                radius: 9.4,
-                onTap: () => _continue(context, signUp: false),
+              // The buttons rise in once the logo has landed.
+              child: Entrance(
+                delay: const Duration(milliseconds: 380),
+                child: DesignButton(
+                  label: Str.logIn,
+                  color: pink,
+                  radius: 9.4,
+                  onTap: () => _continue(context, signUp: false),
+                ),
               ),
             ),
             Positioned(
@@ -141,11 +146,14 @@ class WelcomeScreen extends StatelessWidget {
               top: 482.5,
               width: 243.3,
               height: 46.6,
-              child: DesignButton(
-                label: Str.signIn,
-                color: pink,
-                radius: 9.4,
-                onTap: () => _continue(context, signUp: true),
+              child: Entrance(
+                delay: const Duration(milliseconds: 460),
+                child: DesignButton(
+                  label: Str.signUp,
+                  color: pink,
+                  radius: 9.4,
+                  onTap: () => _continue(context, signUp: true),
+                ),
               ),
             ),
           ]),

@@ -79,7 +79,7 @@ assets/
   images/logo.svg             logo vectorial; logo_script.svg es solo la letra
   images/bg_*.jpg             fondos en 1290 px de ancho
   images/calendar_paper.png   hoja del calendario con las argollas
-  fonts/                      Source Sans 3, Anton, Outfit (licencia OFL)
+  fonts/                      Epilogue, Anton, Outfit (licencia OFL)
 ```
 
 ## Firebase

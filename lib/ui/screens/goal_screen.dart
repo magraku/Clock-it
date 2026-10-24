@@ -107,7 +107,8 @@ class _GoalScreenState extends State<GoalScreen> {
                     rect: _box,
                     child: Container(
                       decoration: BoxDecoration(
-                        color: goal.color.accent.withValues(alpha: 0.8),
+                        color: goal.color.accent.withValues(alpha: Surface.alpha),
+                        boxShadow: Surface.shadow,
                         borderRadius: BorderRadius.circular(12.8),
                       ),
                       child: AnimatedSwitcher(
@@ -142,7 +143,7 @@ class _GoalScreenState extends State<GoalScreen> {
                             ? '${Str.stop} · ${_mmss(timer!.remainingMs(state.now.millisecondsSinceEpoch))}'
                             : Str.start,
                         semanticLabel: timer?.running ?? false ? Str.stop : Str.start,
-                        color: timer?.running ?? false ? Palette.coral : Palette.green,
+                        color: timer?.running ?? false ? Palette.plum : Palette.turquoise,
                         onTap: () => _startOrStop(goal),
                       ),
                     ),
@@ -174,7 +175,8 @@ class _Cronometer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: goal.color.color.withValues(alpha: 0.8),
+        color: goal.color.color.withValues(alpha: Surface.alpha),
+        boxShadow: Surface.shadow,
         borderRadius: BorderRadius.circular(12.8),
       ),
       child: Stack(children: [
@@ -185,7 +187,7 @@ class _Cronometer extends StatelessWidget {
           child: Text(
             Str.timer,
             maxLines: 1,
-            style: const TextStyle(fontSize: 25, fontWeight: FontWeight.w600, color: Palette.navyText, height: 1),
+            style: const TextStyle(fontSize: 25, fontWeight: FontWeight.w600, color: Palette.ink, height: 1),
           ),
         ),
         for (var i = 0; i < _presets.length; i++)
@@ -231,7 +233,7 @@ class _Chip extends StatelessWidget {
           child: Text(
             Str.minutesChip(minutes),
             maxLines: 1,
-            style: const TextStyle(fontSize: 25, fontWeight: FontWeight.w600, color: Palette.navyText, height: 1),
+            style: const TextStyle(fontSize: 25, fontWeight: FontWeight.w600, color: Palette.ink, height: 1),
           ),
         ),
       ),
@@ -259,7 +261,7 @@ class _GlassView extends StatelessWidget {
       final left = Duration(milliseconds: t.remainingMs(state.now.millisecondsSinceEpoch));
       label = Str.timerSemantics('${left.inMinutes} min ${left.inSeconds % 60} s');
     }
-    final sand = goal.color == GoalColor.yellow ? Palette.navyDeep : goal.color.color;
+    final sand = goal.color == GoalColor.yellow ? Palette.inkDeep : goal.color.color;
     return Stack(children: [
       Positioned(
         left: 0,
@@ -307,7 +309,7 @@ class _GlassView extends StatelessWidget {
             semanticLabel: Str.closeTimer,
             child: const Padding(
               padding: EdgeInsets.all(8),
-              child: Icon(Icons.close, size: 22, color: Palette.navyText),
+              child: Icon(Icons.close, size: 22, color: Palette.ink),
             ),
           ),
         ),
@@ -338,7 +340,7 @@ class _StyleOption extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: selected ? 0.75 : 0.3),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: selected ? Palette.navyText : Colors.transparent, width: 1.5),
+          border: Border.all(color: selected ? Palette.ink : Colors.transparent, width: 1.5),
         ),
         child: HourglassSwatch(style: style, sand: sand),
       ),
@@ -391,11 +393,11 @@ class _MonthView extends StatelessWidget {
                     Text(
                       Str.monthYear(month.year, month.month).toUpperCase(),
                       style:
-                          const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Palette.navy, height: 1.1),
+                          const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Palette.ink, height: 1.1),
                     ),
                     Text(
                       Str.ofGoal(h(sum.total), fmtHours(sum.goalMinutes)),
-                      style: const TextStyle(fontSize: 12, color: Palette.navyText, height: 1.2),
+                      style: const TextStyle(fontSize: 12, color: Palette.ink, height: 1.2),
                     ),
                   ]),
                 ),
@@ -410,7 +412,7 @@ class _MonthView extends StatelessWidget {
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
                   child: Text(w,
-                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Palette.navyText)),
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Palette.ink)),
                 ),
               ),
           ]),
@@ -445,14 +447,14 @@ class _MonthView extends StatelessWidget {
         decoration: BoxDecoration(
           color: minutes > 0 ? goal.color.color.withValues(alpha: 0.85) : Colors.white.withValues(alpha: 0.35),
           borderRadius: BorderRadius.circular(5),
-          border: today ? Border.all(color: Palette.navy, width: 1.4) : null,
+          border: today ? Border.all(color: Palette.ink, width: 1.4) : null,
         ),
         child: Stack(children: [
           Align(
             alignment: Alignment.topLeft,
             child: FittedBox(
               fit: BoxFit.scaleDown,
-              child: Text('$day', style: const TextStyle(fontSize: 11, color: Palette.navyText, height: 1)),
+              child: Text('$day', style: const TextStyle(fontSize: 11, color: Palette.ink, height: 1)),
             ),
           ),
           if (hours.isNotEmpty)
@@ -462,7 +464,7 @@ class _MonthView extends StatelessWidget {
                 fit: BoxFit.scaleDown,
                 child: Text(hours,
                     style:
-                        const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Palette.navyDeep, height: 1)),
+                        const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Palette.inkDeep, height: 1)),
               ),
             ),
         ]),
@@ -482,7 +484,7 @@ class _Arrow extends StatelessWidget {
   Widget build(BuildContext context) => Pressable(
         onTap: onTap,
         semanticLabel: label,
-        child: SizedBox(width: 34, height: 34, child: Icon(icon, color: Palette.navy, size: 24)),
+        child: SizedBox(width: 34, height: 34, child: Icon(icon, color: Palette.ink, size: 24)),
       );
 }
 

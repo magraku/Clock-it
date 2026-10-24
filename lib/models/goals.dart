@@ -15,7 +15,8 @@ import 'dart:math';
 
 import 'hours_data.dart';
 
-/// The four card colors in the design.
+/// The four card colors. The names are what accounts store; since the plum
+/// palette they paint turquoise, lavender, pink and butter (see theme.dart).
 enum GoalColor { green, orange, pink, yellow }
 
 /// A focus countdown ("Cronometer"). Each stretch it runs is logged as a

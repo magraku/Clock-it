@@ -169,7 +169,7 @@ class _WordmarkPainter extends CustomPainter {
         style: TextStyle(
           fontFamily: Fonts.display,
           fontSize: fontSize,
-          color: Palette.navy,
+          color: Palette.ink,
           letterSpacing: -fontSize * 0.01,
         ),
       ),
@@ -203,8 +203,8 @@ class _GoalCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Widget row(String label, String value, double size) {
-      // Navy: the design's light text on green read at 1.6:1.
-      final style = TextStyle(fontSize: size, color: Palette.navyDeep, height: 1.2);
+      // Plum: the design's light text on the card read at 1.6:1.
+      final style = TextStyle(fontSize: size, color: Palette.inkDeep, height: 1.2);
       return Row(children: [
         // Shrinks rather than cutting the label off.
         Expanded(
@@ -224,7 +224,7 @@ class _GoalCard extends StatelessWidget {
       semanticLabel: Str.monthlyGoal,
       child: Container(
         decoration: BoxDecoration(
-          color: Palette.green.withValues(alpha: 0.8),
+          color: Palette.turquoise.withValues(alpha: 0.8),
           borderRadius: BorderRadius.circular(23 * s),
         ),
         padding: EdgeInsets.fromLTRB(28 * s, 30 * s, 28 * s, 16 * s),
@@ -237,14 +237,18 @@ class _GoalCard extends StatelessWidget {
               row(Str.monFri, _need(summary.weekdaysLeft), 34 * s),
               row(Str.everyday, _need(summary.daysLeft), 34 * s),
               SizedBox(height: 22 * s),
-              Text(
-                Str.daysLeft(summary.weekdaysLeft, summary.daysLeft),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 24 * s,
-                  color: Palette.navyDeep,
-                  height: 1.1,
+              // Shrinks rather than cutting "days left" off.
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  Str.daysLeft(summary.weekdaysLeft, summary.daysLeft),
+                  maxLines: 1,
+                  style: TextStyle(
+                    fontSize: 24 * s,
+                    color: Palette.inkDeep,
+                    height: 1.1,
+                  ),
                 ),
               ),
             ],
@@ -279,7 +283,7 @@ class _MonthStats extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 42 * s,
                   fontWeight: FontWeight.w700,
-                  color: Palette.navy,
+                  color: Palette.ink,
                   height: 1.1,
                 ),
               ),
@@ -287,7 +291,7 @@ class _MonthStats extends StatelessWidget {
                 Str.daysWorked(summary.daysWithHours, fmtHours(summary.average)),
                 style: TextStyle(
                   fontSize: 31 * s,
-                  color: Palette.navy.withValues(alpha: 0.75),
+                  color: Palette.ink.withValues(alpha: 0.75),
                   height: 1.2,
                 ),
               ),
@@ -326,9 +330,9 @@ class _RoundIcon extends StatelessWidget {
         height: size * s,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          border: Border.all(color: Palette.navy.withValues(alpha: 0.55), width: 2.4 * s),
+          border: Border.all(color: Palette.ink.withValues(alpha: 0.55), width: 2.4 * s),
         ),
-        child: Icon(icon, color: Palette.navy, size: size * 0.66 * s),
+        child: Icon(icon, color: Palette.ink, size: size * 0.66 * s),
       ),
     );
   }
@@ -350,7 +354,7 @@ class _Grid extends StatefulWidget {
   static const _headerHeight = 42.0;
 
   static Color? tint(double minutes, bool today) {
-    if (today) return Palette.pink.withValues(alpha: 0.75);
+    if (today) return Palette.rose.withValues(alpha: 0.75);
     if (minutes <= 0) return null;
     final h = minutes / 60;
     final a = h < 4
@@ -360,7 +364,7 @@ class _Grid extends StatefulWidget {
             : h < 10
                 ? 0.7
                 : 1.0;
-    return Palette.orange.withValues(alpha: a);
+    return Palette.lavender.withValues(alpha: a);
   }
 
   @override
@@ -402,7 +406,7 @@ class _GridState extends State<_Grid> with SingleTickerProviderStateMixin {
     return LayoutBuilder(builder: (context, c) {
       final colW = c.maxWidth / 7;
       final rowH = (c.maxHeight - headerHeight * s) / rows;
-      final line = Palette.navy.withValues(alpha: 0.8);
+      final line = Palette.ink.withValues(alpha: 0.8);
 
       final cells = <Widget>[];
       for (var i = 0; i < rows * 7; i++) {
@@ -414,7 +418,7 @@ class _GridState extends State<_Grid> with SingleTickerProviderStateMixin {
           final shown = day < 1 ? prevDays + day : day - n;
           cell = ExcludeSemantics(
             child: Stack(children: [
-              _DayNumber(day: shown, s: s, color: Palette.navy.withValues(alpha: 0.3)),
+              _DayNumber(day: shown, s: s, color: Palette.ink.withValues(alpha: 0.3)),
             ]),
           );
         } else {
@@ -443,7 +447,7 @@ class _GridState extends State<_Grid> with SingleTickerProviderStateMixin {
                     ),
                   ),
                 ),
-              _DayNumber(day: day, s: s, color: Palette.navyDeep),
+              _DayNumber(day: day, s: s, color: Palette.inkDeep),
               if (hours.isNotEmpty)
                 Positioned(
                   left: 0,
@@ -457,7 +461,7 @@ class _GridState extends State<_Grid> with SingleTickerProviderStateMixin {
                     overflow: TextOverflow.visible,
                     style: TextStyle(
                       fontSize: (hours.length > 5 ? 30 : 34) * s,
-                      color: today ? Palette.navyText : Palette.navyDeep,
+                      color: today ? Palette.ink : Palette.inkDeep,
                       height: 1,
                     ),
                   ),

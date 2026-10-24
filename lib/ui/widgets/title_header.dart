@@ -30,7 +30,7 @@ class TitleHeader extends StatelessWidget {
   static const _gap = 8.0; // text to the logo's clock face
 
   static TextStyle _style(double size) =>
-      TextStyle(fontSize: size, fontWeight: FontWeight.w600, color: Palette.navyText, height: 1);
+      TextStyle(fontSize: size, fontWeight: FontWeight.w600, color: Palette.ink, height: 1);
 
   @override
   Widget build(BuildContext context) {
@@ -86,7 +86,8 @@ class TitleHeader extends StatelessWidget {
     final title = Text(text, maxLines: 1, overflow: TextOverflow.ellipsis, style: _style(font));
     final pill = Container(
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.8),
+        color: color.withValues(alpha: Surface.alpha),
+        boxShadow: Surface.shadow,
         borderRadius: BorderRadius.circular(12.8),
       ),
       padding: EdgeInsets.only(left: _padLeft, right: _gap + logo / 2),
@@ -96,7 +97,7 @@ class TitleHeader extends StatelessWidget {
           : Row(children: [
               Flexible(child: title),
               const SizedBox(width: 6),
-              const Icon(Icons.edit_outlined, size: _pencil - 6, color: Palette.navyText),
+              const Icon(Icons.edit_outlined, size: _pencil - 6, color: Palette.ink),
             ]),
     );
     final heading = Semantics(header: true, label: text, child: ExcludeSemantics(child: pill));

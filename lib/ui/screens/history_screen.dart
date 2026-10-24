@@ -32,7 +32,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Backdrop(
-        image: Assets.bgSoft,
         child: SafeArea(
           bottom: false,
           child: ListenableBuilder(
@@ -66,12 +65,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
                           Text(
                             Str.monthYear(_month.year, _month.month).toUpperCase(),
                             textAlign: TextAlign.center,
-                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Palette.navy),
+                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Palette.ink),
                           ),
                           Text(
                             Str.ofGoal(total.isEmpty ? '0h' : total, fmtHours(sum.goalMinutes)),
                             textAlign: TextAlign.center,
-                            style: const TextStyle(fontSize: 14, color: Palette.navyText),
+                            style: const TextStyle(fontSize: 14, color: Palette.ink),
                           ),
                         ]),
                       ),
@@ -154,7 +153,7 @@ class _Header extends StatelessWidget {
               alignment: Alignment.topCenter,
               child: MediaQuery.withClampedTextScaling(
                 maxScaleFactor: 1.3,
-                child: TitleHeader(text: Str.history.toUpperCase(), color: Palette.yellow),
+                child: TitleHeader(text: Str.history.toUpperCase(), color: Palette.butter),
               ),
             ),
           ),
@@ -170,7 +169,8 @@ class _Header extends StatelessWidget {
                 child: const SizedBox(
                   width: 44,
                   height: 44,
-                  child: Icon(Icons.arrow_back_ios_new, color: Palette.navy, size: 22),
+                  // Straight on the background, which is dark here and there.
+                  child: Icon(Icons.arrow_back_ios_new, color: Palette.cream, size: 22),
                 ),
               ),
             ),
@@ -209,14 +209,14 @@ class _GoalPicker extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: g.color.color.withValues(alpha: g.id == selected ? 1 : 0.6),
                   borderRadius: BorderRadius.circular(12.8),
-                  border: Border.all(color: g.id == selected ? Palette.navy : Colors.transparent, width: 2),
+                  border: Border.all(color: g.id == selected ? Palette.ink : Colors.transparent, width: 2),
                 ),
                 child: Text(
                   g.name.toUpperCase(),
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: g.id == selected ? FontWeight.w700 : FontWeight.w600,
-                    color: Palette.navyText,
+                    color: Palette.ink,
                   ),
                 ),
               ),
@@ -238,13 +238,13 @@ class _DayRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hours = fmtHours(minutes);
-    const ink = Palette.navyText;
+    const ink = Palette.ink;
     return Semantics(
       container: true,
       label: [Str.fullDate(date), if (hours.isNotEmpty) hours, ...spans].join(', '),
       excludeSemantics: true,
       child: Container(
-        color: today ? Palette.pink.withValues(alpha: 0.35) : null,
+        color: today ? Palette.rose.withValues(alpha: 0.35) : null,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
           SizedBox(
@@ -265,7 +265,7 @@ class _DayRow extends StatelessWidget {
                     spans.join('  ·  '),
                     style: const TextStyle(
                       fontSize: 13,
-                      color: Palette.navyText,
+                      color: Palette.ink,
                       height: 1.35,
                       fontFeatures: [FontFeature.tabularFigures()],
                     ),
@@ -276,7 +276,7 @@ class _DayRow extends StatelessWidget {
               padding: const EdgeInsets.only(left: 8),
               child: Text(
                 hours,
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Palette.navy),
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Palette.ink),
               ),
             ),
         ]),
@@ -297,6 +297,6 @@ class _Arrow extends StatelessWidget {
         onTap: onTap,
         semanticLabel: label,
         focusRadius: 22,
-        child: SizedBox(width: 44, height: 44, child: Icon(icon, color: Palette.navy, size: 28)),
+        child: SizedBox(width: 44, height: 44, child: Icon(icon, color: Palette.ink, size: 28)),
       );
 }

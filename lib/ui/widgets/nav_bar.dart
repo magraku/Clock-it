@@ -8,7 +8,7 @@ import 'common.dart';
 enum AppTab { goals, home, profile }
 
 /// Pink bottom bar from the design (314 × 60 artboard), full width.
-/// Navy throughout (white failed contrast on pink); the current tab sits on
+/// Plum throughout (white fails contrast on pink); the current tab sits on
 /// a light pill and its label is bold. The pill slides to a newly picked tab
 /// and settles with a slight spring; that tab's icon lifts and pops.
 class NavBar extends StatelessWidget {
@@ -34,7 +34,7 @@ class NavBar extends StatelessWidget {
     return Container(
       height: heightOf(context),
       // Square corners: a full-width bar, edge to edge.
-      color: Palette.pink.withValues(alpha: 0.75),
+      color: Palette.rose.withValues(alpha: Surface.alpha),
       alignment: Alignment.topCenter,
       child: SizedBox(
         height: designSize.height * s,
@@ -89,7 +89,7 @@ class NavBar extends StatelessWidget {
                     scale: selected ? 1.1 : 1,
                     duration: Motion.standard,
                     curve: Motion.pop,
-                    child: icon(Palette.navyText),
+                    child: icon(Palette.ink),
                   ),
                 ),
               ),
@@ -102,7 +102,7 @@ class NavBar extends StatelessWidget {
               maxLines: 1,
               style: TextStyle(
                 fontSize: 11,
-                color: Palette.navyText,
+                color: Palette.ink,
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
                 height: 1,
               ),

@@ -2,46 +2,56 @@ import 'package:flutter/material.dart';
 
 import '../models/goals.dart';
 
-/// Colors taken from `reference/Clock-it.vectorcraft` (CMYK converted to RGB).
-/// Text that reads on [background]: white on dark colours, navy on light
-/// ones (the design's pastel buttons are light, so white text fails there).
+/// Text that reads on [background]: cream on dark colours, plum on light
+/// ones.
 Color onColor(Color background) =>
-    ThemeData.estimateBrightnessForColor(background) == Brightness.dark ? Colors.white : Palette.navyText;
+    ThemeData.estimateBrightnessForColor(background) == Brightness.dark ? Palette.cream : Palette.ink;
 
+/// The plum palette, taken from the moving background's reference (4th
+/// artboard of the design): dark plum underneath, pale pink, butter,
+/// lavender and a soft turquoise accent. Cream text on the dark parts,
+/// plum text on the light ones.
 abstract final class Palette {
-  static const navy = Color(0xFF32486D); // big numbers, "JAN", grid
-  static const navyText = Color(0xFF32466C); // "Hours left to do:"
-  static const navyDeep = Color(0xFF2B3B5B); // hours inside cells
-  static const green = Color(0xFF8DC740); // "Mark entry", progress, goal card
-  static const yellow = Color(0xFFFFF8A5); // hours-left card
-  static const track = Color(0xFFCFC7C0); // progress track
-  static const pink = Color(0xFFFFB7FF); // today, Log in / Sign in
-  static const orange = Color(0xFFFAAF3C); // days with hours
-  static const sand = Color(0xFFDDD5CE); // text on the goal card
-  static const cream = Color(0xFFF3F0E6); // splash background, sheets
-  static const coral = Color(0xFFB8432F); // destructive actions (5.4:1 under white text)
+  static const plumDark = Color(0xFF3B1F2E); // background base
+  static const plum = Color(0xFF7A4A6B); // "Mark exit", the background's middle tone
+  static const ink = plumDark; // text, big numbers, "JAN", grid
+  static const inkDeep = Color(0xFF2E1823); // hours inside cells, hourglass ink
+  static const turquoise = Color(0xFF9EE6E0); // "Mark entry", progress, goal card (accent)
+  static const butter = Color(0xFFE8E08A); // hours-left card
+  static const rose = Color(0xFFF2C4D3); // today, Log in / Sign up, the bar
+  static const lavender = Color(0xFFCFC8FF); // days with hours
+  static const mist = Color(0xFFE9DCE4); // progress track
+  static const cream = Color(0xFFFFF6EC); // text on dark, sheets
+  static const berry = Color(0xFFA33A55); // destructive actions (6.5:1 under cream text)
+}
+
+/// Cards, buttons, the timer and the bar sit on the moving background:
+/// nearly opaque, with a soft plum shadow that lifts them off it.
+abstract final class Surface {
+  static const alpha = 0.9;
+  static const shadow = [BoxShadow(color: Color(0x383B1F2E), blurRadius: 14, offset: Offset(0, 4))];
 }
 
 extension GoalColorPaint on GoalColor {
   Color get color => switch (this) {
-        GoalColor.green => Palette.green,
-        GoalColor.orange => Palette.orange,
-        GoalColor.pink => Palette.pink,
-        GoalColor.yellow => Palette.yellow,
+        GoalColor.green => Palette.turquoise,
+        GoalColor.orange => Palette.lavender,
+        GoalColor.pink => Palette.rose,
+        GoalColor.yellow => Palette.butter,
       };
 
-  /// Chips and boxes sit in yellow, except on a yellow goal.
-  Color get accent => this == GoalColor.yellow ? Palette.pink : Palette.yellow;
+  /// Chips and boxes sit in butter, except on a butter goal.
+  Color get accent => this == GoalColor.yellow ? Palette.rose : Palette.butter;
 }
 
 abstract final class Fonts {
-  static const sans = 'SourceSans3';
+  static const sans = 'Epilogue';
   static const display = 'Anton';
   static const numbers = 'Outfit';
 }
 
 /// Outfit ships as a variable font; the weight goes through `wght`.
-TextStyle outfit(double size, {double weight = 500, Color color = Palette.navy}) => TextStyle(
+TextStyle outfit(double size, {double weight = 500, Color color = Palette.ink}) => TextStyle(
       fontFamily: Fonts.numbers,
       fontSize: size,
       color: color,
@@ -52,8 +62,8 @@ TextStyle outfit(double size, {double weight = 500, Color color = Palette.navy})
 
 ThemeData buildTheme() {
   final scheme = ColorScheme.fromSeed(
-    seedColor: Palette.navy,
-    primary: Palette.navy,
+    seedColor: Palette.ink,
+    primary: Palette.ink,
     surface: Palette.cream,
   );
   return ThemeData(
@@ -72,15 +82,15 @@ ThemeData buildTheme() {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Palette.navy, width: 1.5),
+        borderSide: const BorderSide(color: Palette.ink, width: 1.5),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Palette.coral, width: 1.5),
+        borderSide: const BorderSide(color: Palette.berry, width: 1.5),
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Palette.coral, width: 1.5),
+        borderSide: const BorderSide(color: Palette.berry, width: 1.5),
       ),
     ),
   );

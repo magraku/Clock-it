@@ -264,8 +264,8 @@ class AppState extends ChangeNotifier {
     alerts.showRunning(LiveTimer(
       goalId: g.id,
       goal: g.name,
-      // As in the app: the goal's colour, or navy on a yellow goal.
-      color: (g.color == GoalColor.yellow ? Palette.navyDeep : g.color.color).toARGB32() & 0xFFFFFF,
+      // As in the app: the goal's colour, or plum on a butter goal.
+      color: (g.color == GoalColor.yellow ? Palette.inkDeep : g.color.color).toARGB32() & 0xFFFFFF,
       start: DateTime.fromMillisecondsSinceEpoch(ends - g.timer!.totalMs),
       end: DateTime.fromMillisecondsSinceEpoch(ends),
     ));

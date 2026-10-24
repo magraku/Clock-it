@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
@@ -8,11 +7,13 @@ import 'package:flutter/material.dart';
 import '../../models/goals.dart';
 import '../theme.dart';
 import 'common.dart';
+import 'flow_background.dart';
 
-/// The focus screen's background: the app's own photo, or one of the
-/// painted wallpapers. Each painted one takes the hourglass print's shapes
-/// and lays the app's colours over them like drops of paint bleeding into
-/// wet paper, with the same grain as the photos.
+/// The focus screen's background: the app's moving marbling (the "photo"
+/// style, kept under that name in saved accounts), or one of the painted
+/// wallpapers. Each painted one takes the hourglass print's shapes and lays
+/// the app's colours over them like drops of paint bleeding into wet paper,
+/// with the same grain as the marbling.
 class WallpaperBackdrop extends StatelessWidget {
   const WallpaperBackdrop({super.key, required this.style, required this.child});
 
@@ -21,7 +22,7 @@ class WallpaperBackdrop extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (style == WallpaperStyle.photo) return Backdrop(image: Assets.bgMain, child: child);
+    if (style == WallpaperStyle.photo) return Backdrop(child: child);
     return Stack(children: [
       // Its own layer: the timer animating on top doesn't repaint the grain.
       Positioned.fill(
@@ -45,7 +46,7 @@ class WallpaperSwatch extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(10),
       child: style == WallpaperStyle.photo
-          ? const Image(image: AssetImage(Assets.bgMain), fit: BoxFit.cover)
+          ? const FlowBackground()
           : CustomPaint(painter: WallpaperPainter(style), child: const SizedBox.expand()),
     );
   }
@@ -58,27 +59,21 @@ Future<Uint8List> wallpaperPng(WallpaperStyle style) async {
   final recorder = ui.PictureRecorder();
   final canvas = Canvas(recorder, Offset.zero & size);
   if (style == WallpaperStyle.photo) {
-    // The photo is a plain asset; scale it to cover the screen.
-    final data = await _loadPhoto();
-    paintImage(canvas: canvas, rect: Offset.zero & size, image: data, fit: BoxFit.cover);
+    // The marbling as it is right now, held still.
+    ui.FragmentShader? shader;
+    try {
+      shader = (await FlowBackground.program).fragmentShader();
+    } on Object {
+      shader = null; // the still gradient instead
+    }
+    FlowPainter.paintFlow(canvas, size, shader, FlowBackground.now, 1);
+    shader?.dispose();
   } else {
     WallpaperPainter(style).paint(canvas, size);
   }
   final image = await recorder.endRecording().toImage(size.width.toInt(), size.height.toInt());
   final png = await image.toByteData(format: ui.ImageByteFormat.png);
   return png!.buffer.asUint8List();
-}
-
-Future<ui.Image> _loadPhoto() async {
-  final stream = const AssetImage(Assets.bgMain).resolve(ImageConfiguration.empty);
-  final done = Completer<ui.Image>();
-  late final ImageStreamListener listener;
-  listener = ImageStreamListener((info, _) {
-    done.complete(info.image);
-    stream.removeListener(listener);
-  }, onError: (e, s) => done.completeError(e, s));
-  stream.addListener(listener);
-  return done.future;
 }
 
 /// One look per style, all from the same three layers: a wash, soft blots
@@ -218,54 +213,54 @@ class _Look {
 }
 
 const _cream = Palette.cream;
-const _navy = Palette.navyDeep;
+const _ink = Palette.inkDeep;
 
 final _looks = <WallpaperStyle, _Look>{
   // Pink and orange drops meeting in the middle, one big glass in their glow.
   WallpaperStyle.drop: _Look(
     wash: const [_cream, Color(0xFFF6E7EC)],
     blots: [
-      _Blot(0.2, 0.28, 0.75, Palette.pink.withValues(alpha: 0.85)),
-      _Blot(0.85, 0.5, 0.7, Palette.orange.withValues(alpha: 0.7)),
-      _Blot(0.35, 0.82, 0.6, Palette.coral.withValues(alpha: 0.35)),
-      _Blot(0.7, 0.12, 0.35, Palette.yellow.withValues(alpha: 0.9)),
+      _Blot(0.2, 0.28, 0.75, Palette.rose.withValues(alpha: 0.85)),
+      _Blot(0.85, 0.5, 0.7, Palette.lavender.withValues(alpha: 0.7)),
+      _Blot(0.35, 0.82, 0.6, Palette.berry.withValues(alpha: 0.35)),
+      _Blot(0.7, 0.12, 0.35, Palette.butter.withValues(alpha: 0.9)),
     ],
     glasses: [
-      _Glass(0.5, 0.56, 46, fill: _cream.withValues(alpha: 0.35), ink: _navy.withValues(alpha: 0.75)),
+      _Glass(0.5, 0.56, 46, fill: _cream.withValues(alpha: 0.35), ink: _ink.withValues(alpha: 0.75)),
     ],
   ),
-  // Night for the lock screen: deep navy, warm drops low, a cream glass.
+  // Night for the lock screen: deep plum, warm drops low, a cream glass.
   WallpaperStyle.dusk: _Look(
-    wash: const [Color(0xFF1F2B44), _navy],
+    wash: const [Color(0xFF2A1520), _ink],
     blots: [
-      _Blot(0.15, 0.85, 0.7, Palette.coral.withValues(alpha: 0.75)),
-      _Blot(0.9, 0.72, 0.6, Palette.orange.withValues(alpha: 0.55)),
-      _Blot(0.6, 1.0, 0.55, Palette.pink.withValues(alpha: 0.5)),
-      _Blot(0.8, 0.15, 0.3, Palette.pink.withValues(alpha: 0.2)),
+      _Blot(0.15, 0.85, 0.7, Palette.berry.withValues(alpha: 0.75)),
+      _Blot(0.9, 0.72, 0.6, Palette.lavender.withValues(alpha: 0.55)),
+      _Blot(0.6, 1.0, 0.55, Palette.rose.withValues(alpha: 0.5)),
+      _Blot(0.8, 0.15, 0.3, Palette.rose.withValues(alpha: 0.2)),
     ],
     glasses: [
       _Glass(0.5, 0.58, 40, fill: _cream.withValues(alpha: 0.12), ink: _cream.withValues(alpha: 0.85)),
     ],
   ),
-  // Fresh: yellow and green drops, two soft glasses leaning on each other.
+  // Fresh: butter and turquoise drops, two soft glasses leaning on each other.
   WallpaperStyle.meadow: _Look(
-    wash: const [Color(0xFFFBF8E3), _cream],
+    wash: const [Color(0xFFF7F3D8), _cream],
     blots: [
-      const _Blot(0.85, 0.25, 0.7, Palette.yellow),
-      _Blot(0.1, 0.6, 0.75, Palette.green.withValues(alpha: 0.6)),
-      _Blot(0.7, 0.95, 0.55, Palette.green.withValues(alpha: 0.45)),
+      const _Blot(0.85, 0.25, 0.7, Palette.butter),
+      _Blot(0.1, 0.6, 0.75, Palette.turquoise.withValues(alpha: 0.6)),
+      _Blot(0.7, 0.95, 0.55, Palette.turquoise.withValues(alpha: 0.45)),
     ],
     glasses: [
-      _Glass(0.38, 0.5, 40, fill: Palette.green.withValues(alpha: 0.55), soft: true),
-      _Glass(0.64, 0.62, 30, curved: false, fill: Palette.orange.withValues(alpha: 0.5), soft: true),
+      _Glass(0.38, 0.5, 40, fill: Palette.turquoise.withValues(alpha: 0.55), soft: true),
+      _Glass(0.64, 0.62, 30, curved: false, fill: Palette.lavender.withValues(alpha: 0.5), soft: true),
     ],
   ),
   // The shapes repeated: a loose pattern of small glasses over pink.
   WallpaperStyle.pattern: _Look(
     wash: const [Color(0xFFFBE9F7), Color(0xFFF7E4D9)],
     blots: [
-      _Blot(0.1, 0.1, 0.6, Palette.pink.withValues(alpha: 0.7)),
-      _Blot(0.95, 0.9, 0.7, Palette.orange.withValues(alpha: 0.5)),
+      _Blot(0.1, 0.1, 0.6, Palette.rose.withValues(alpha: 0.7)),
+      _Blot(0.95, 0.9, 0.7, Palette.lavender.withValues(alpha: 0.5)),
     ],
     glasses: [
       // Four per row, three on the offset rows, so none is cut at the edge.
@@ -276,8 +271,8 @@ final _looks = <WallpaperStyle, _Look>{
             0.07 + row * 0.145,
             11,
             curved: (row + col).isEven,
-            ink: _navy.withValues(alpha: 0.28),
-            fill: [Palette.yellow, Palette.pink, Palette.green, Palette.orange][(row + col) % 4].withValues(alpha: 0.45),
+            ink: _ink.withValues(alpha: 0.28),
+            fill: [Palette.butter, Palette.rose, Palette.turquoise, Palette.lavender][(row + col) % 4].withValues(alpha: 0.45),
           ),
     ],
   ),

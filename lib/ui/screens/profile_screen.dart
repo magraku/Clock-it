@@ -23,7 +23,6 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final email = state.account?.email ?? '';
     return Backdrop(
-      image: Assets.bgSoft,
       child: SafeArea(
         bottom: false,
         child: Padding(
@@ -35,7 +34,7 @@ class ProfileScreen extends StatelessWidget {
               listenable: state,
               builder: (context, _) => Stack(children: [
                 Positioned(
-                    left: 0, top: 0, child: TitleHeader(text: Str.tabProfile.toUpperCase(), color: Palette.pink)),
+                    left: 0, top: 0, child: TitleHeader(text: Str.tabProfile.toUpperCase(), color: Palette.rose)),
                 Positioned(
                   left: 25.1,
                   top: 124.8,
@@ -44,7 +43,8 @@ class ProfileScreen extends StatelessWidget {
                   child: Entrance(
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Palette.pink.withValues(alpha: 0.8),
+                        color: Palette.rose.withValues(alpha: Surface.alpha),
+                        boxShadow: Surface.shadow,
                         borderRadius: BorderRadius.circular(12.8),
                       ),
                       padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
@@ -53,19 +53,19 @@ class ProfileScreen extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(Str.signedInAs, style: const TextStyle(fontSize: 14, color: Palette.navyText)),
+                            Text(Str.signedInAs, style: const TextStyle(fontSize: 14, color: Palette.ink)),
                             const SizedBox(height: 2),
                             FittedBox(
                               fit: BoxFit.scaleDown,
                               alignment: Alignment.centerLeft,
                               child: Text(
                                 email,
-                                style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w600, color: Palette.navy),
+                                style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w600, color: Palette.ink),
                               ),
                             ),
                             const SizedBox(height: 12),
                             Text(Str.goalCount(state.goals.length),
-                                style: const TextStyle(fontSize: 14, color: Palette.navyText)),
+                                style: const TextStyle(fontSize: 14, color: Palette.ink)),
                           ],
                         ),
                       ),
@@ -95,7 +95,7 @@ class ProfileScreen extends StatelessWidget {
                         icon: Icons.person_remove_outlined,
                         label: Str.deleteAccount,
                         onTap: onDeleteAccount,
-                        color: Palette.coral,
+                        color: Palette.berry,
                       ),
                     ].indexed) ...[
                       if (i > 0) const SizedBox(height: 10),
@@ -113,7 +113,7 @@ class ProfileScreen extends StatelessWidget {
 }
 
 class _Row extends StatelessWidget {
-  const _Row({required this.icon, required this.label, required this.onTap, this.color = Palette.navyText});
+  const _Row({required this.icon, required this.label, required this.onTap, this.color = Palette.ink});
 
   final IconData icon;
   final String label;
@@ -129,7 +129,8 @@ class _Row extends StatelessWidget {
         height: 52,
         padding: const EdgeInsets.symmetric(horizontal: 14),
         decoration: BoxDecoration(
-          color: Palette.yellow.withValues(alpha: 0.8),
+          color: Palette.butter.withValues(alpha: Surface.alpha),
+          boxShadow: Surface.shadow,
           borderRadius: BorderRadius.circular(12.8),
         ),
         child: Row(children: [

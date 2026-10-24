@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 /// (by default tests render every glyph as a 1em square).
 Future<void> loadAppFonts() async {
   const families = {
-    'SourceSans3': ['SourceSans3-Regular.ttf', 'SourceSans3-Semibold.ttf', 'SourceSans3-Bold.ttf'],
+    'Epilogue': ['Epilogue-Regular.otf', 'Epilogue-SemiBold.otf', 'Epilogue-Bold.otf'],
     'Anton': ['Anton-Regular.ttf'],
     'Outfit': ['Outfit-Variable.ttf'],
   };

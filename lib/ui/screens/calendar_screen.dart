@@ -48,7 +48,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
   @override
   Widget build(BuildContext context) {
     return Backdrop(
-      image: Assets.bgMain,
       child: SafeArea(
         bottom: false,
         child: Padding(
@@ -114,7 +113,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
 }
 
 /// Mark entry / Mark exit: big, with what's happening underneath. While in,
-/// it turns dark red and shows the entry time and a running stopwatch
+/// it turns mid plum and shows the entry time and a running stopwatch
 /// ("Entered at 13:44 · 00:56:56"), like the design's reference.
 class _PunchButton extends StatelessWidget {
   const _PunchButton({required this.state, required this.goal, required this.onTap});
@@ -136,8 +135,8 @@ class _PunchButton extends StatelessWidget {
       title = Str.markEntry;
       detail = Str.todaySoFar(today.isEmpty ? '0h' : today);
     }
-    // Dark red under white text (5.4:1); green under navy (4.7:1).
-    final color = inside ? Palette.coral : Palette.green;
+    // Mid plum under cream text while in; turquoise under plum text to start.
+    final color = inside ? Palette.plum : Palette.turquoise;
     final ink = onColor(color);
     return Pressable(
       onTap: onTap,
@@ -234,7 +233,8 @@ class _HoursLeftCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Palette.yellow.withValues(alpha: 0.8),
+        color: Palette.butter.withValues(alpha: Surface.alpha),
+        boxShadow: Surface.shadow,
         borderRadius: BorderRadius.circular(12.8),
       ),
       child: Stack(children: [
@@ -246,7 +246,7 @@ class _HoursLeftCard extends StatelessWidget {
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 15, color: Palette.navyText, height: 1),
+            style: const TextStyle(fontSize: 15, color: Palette.ink, height: 1),
           ),
         ),
         Positioned(
@@ -277,7 +277,7 @@ class _HoursLeftCard extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 37,
                   fontWeight: FontWeight.w700,
-                  color: Palette.navy,
+                  color: Palette.ink,
                   height: 1,
                 ),
               ),
@@ -316,7 +316,7 @@ class _ProgressBar extends StatelessWidget {
           Positioned.fill(
             child: DecoratedBox(
               decoration: BoxDecoration(
-                color: Palette.track.withValues(alpha: 0.8),
+                color: Palette.mist.withValues(alpha: 0.8),
                 borderRadius: BorderRadius.circular(radius),
               ),
             ),
@@ -331,7 +331,7 @@ class _ProgressBar extends StatelessWidget {
                 width: p == 0 ? 0 : (c.maxWidth * p).clamp(radius * 2, c.maxWidth),
                 clipBehavior: Clip.antiAlias,
                 decoration: BoxDecoration(
-                  color: Palette.green.withValues(alpha: 0.8),
+                  color: Palette.turquoise.withValues(alpha: 0.8),
                   borderRadius: BorderRadius.circular(radius),
                 ),
                 child: _Sheen(active: live),
@@ -345,7 +345,7 @@ class _ProgressBar extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 11.5,
                       fontWeight: FontWeight.w700,
-                      color: Palette.navy,
+                      color: Palette.ink,
                     ),
                   ),
                 ),
@@ -361,7 +361,7 @@ class _ProgressBar extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w600,
-                  color: Palette.navy,
+                  color: Palette.ink,
                 ),
               ),
             ]),

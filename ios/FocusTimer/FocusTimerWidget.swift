@@ -9,9 +9,10 @@ struct FocusTimerBundle: WidgetBundle {
   }
 }
 
-private let navy = Color(red: 0x2B / 255, green: 0x3B / 255, blue: 0x5B / 255)
-private let cream = Color(red: 0xF1 / 255, green: 0xE8 / 255, blue: 0xD0 / 255)
-private let yellow = Color(red: 1, green: 0xF8 / 255, blue: 0xA5 / 255)
+// The app's plum palette (lib/ui/theme.dart).
+private let plum = Color(red: 0x3B / 255, green: 0x1F / 255, blue: 0x2E / 255)
+private let cream = Color(red: 1, green: 0xF6 / 255, blue: 0xEC / 255)
+private let butter = Color(red: 0xE8 / 255, green: 0xE0 / 255, blue: 0x8A / 255)
 
 private extension Color {
   init(rgb: Int) {
@@ -23,8 +24,8 @@ struct FocusTimerLiveActivity: Widget {
   var body: some WidgetConfiguration {
     ActivityConfiguration(for: FocusAttributes.self) { context in
       LockScreenView(context: context)
-        .activityBackgroundTint(yellow.opacity(0.92))
-        .activitySystemActionForegroundColor(navy)
+        .activityBackgroundTint(butter.opacity(0.92))
+        .activitySystemActionForegroundColor(plum)
     } dynamicIsland: { context in
       let sand = Color(rgb: context.attributes.color)
       let range = context.state.start...context.state.end
@@ -77,7 +78,7 @@ private struct LockScreenView: View {
       }
       Spacer(minLength: 0)
     }
-    .foregroundStyle(navy)
+    .foregroundStyle(plum)
     .padding(.horizontal, 20)
     .padding(.vertical, 14)
   }
@@ -90,8 +91,8 @@ private struct LockScreenView: View {
 private struct SandGlass: View {
   let range: ClosedRange<Date>
   let sand: Color
-  /// The frame: navy on the lock screen, cream on the black Dynamic Island.
-  var ink = navy
+  /// The frame: plum on the lock screen, cream on the black Dynamic Island.
+  var ink = plum
 
   var body: some View {
     GeometryReader { geo in

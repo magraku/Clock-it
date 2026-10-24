@@ -35,14 +35,16 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
+  shaders:
+    - shaders/flow.frag
   fonts:
-    - family: SourceSans3
+    - family: Epilogue
       fonts:
-        - asset: assets/fonts/SourceSans3-Regular.ttf
+        - asset: assets/fonts/Epilogue-Regular.otf
           weight: 400
-        - asset: assets/fonts/SourceSans3-Semibold.ttf
+        - asset: assets/fonts/Epilogue-SemiBold.otf
           weight: 600
-        - asset: assets/fonts/SourceSans3-Bold.ttf
+        - asset: assets/fonts/Epilogue-Bold.otf
           weight: 700
     - family: Anton
       fonts:

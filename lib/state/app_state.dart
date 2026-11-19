@@ -27,6 +27,8 @@ class AppState extends ChangeNotifier {
   final DateTime Function() _clock;
   Duration _clockOffset = Duration.zero;
   Timer? _ticker;
+  Future<void>? _refreshing;
+  bool _disposed = false;
   StreamSubscription<UserData>? _sync;
 
   UserData _data = UserData.starter();
@@ -205,7 +207,7 @@ class AppState extends ChangeNotifier {
     final t = g.timer;
     final since = t?.runningSince;
     if (t == null || since == null) return;
-    final end = _nowMs;
+    final end = _nowMs < since ? since : _nowMs;
     _log(g.hours, since, end);
     t
       ..doneMs += end - since
@@ -294,12 +296,20 @@ class AppState extends ChangeNotifier {
     return true;
   }
 
-  /// Re-reads the clock, e.g. when the app returns to the foreground.
-  void refresh() {
+  /// Recalibrates the clock, e.g. when the app returns to the foreground.
+  Future<void> refresh() => _refreshing ??= _refresh().whenComplete(() => _refreshing = null);
+
+  Future<void> _refresh() async {
+    final offset = await _store.clockOffset(_clock);
+    if (_disposed) return;
+    _clockOffset = offset;
     if (_settleTimers()) {
       _commit();
     } else {
       notifyListeners();
+    }
+    for (final g in _data.goals) {
+      _scheduleAlert(g);
     }
   }
 
@@ -316,6 +326,7 @@ class AppState extends ChangeNotifier {
   void _syncTicker() {
     if (_anythingRunning && _ticker == null) {
       _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (_refreshing != null) return;
         if (_settleTimers()) {
           _commit();
         } else {
@@ -330,6 +341,7 @@ class AppState extends ChangeNotifier {
 
   @override
   void dispose() {
+    _disposed = true;
     _ticker?.cancel();
     _sync?.cancel();
     super.dispose();

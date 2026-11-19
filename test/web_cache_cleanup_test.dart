@@ -1,24 +1,32 @@
 import 'dart:async';
 
+import 'package:clock_it/data/accounts.dart';
 import 'package:clock_it/data/web_cache_cleanup.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   for (final mode in ['complete', 'error', 'pending']) {
     test('clears cache before reloading when writes are $mode', () async {
       final calls = <String>[];
-      await clearWebCache(
-        waitForPendingWrites: () async {
-          calls.add('wait');
-          if (mode == 'error') throw StateError('offline');
-          if (mode == 'pending') await Completer<void>().future;
-        },
-        terminate: () async => calls.add('terminate'),
-        clearPersistence: () async => calls.add('clear'),
-        reload: () => calls.add('reload'),
-        timeout: const Duration(milliseconds: 1),
+      final accounts = FirebaseAccountService(
+        auth: _Auth(calls),
+        beforeLogOut: () => flushWebWrites(
+          waitForPendingWrites: () async {
+            calls.add('wait');
+            if (mode == 'error') throw StateError('offline');
+            if (mode == 'pending') await Completer<void>().future;
+          },
+          timeout: const Duration(milliseconds: 1),
+        ),
+        onLogOut: () => clearWebCache(
+          terminate: () async => calls.add('terminate'),
+          clearPersistence: () async => calls.add('clear'),
+          reload: () => calls.add('reload'),
+        ),
       );
-      expect(calls, ['wait', 'terminate', 'clear', 'reload']);
+      await accounts.logOut();
+      expect(calls, ['wait', 'signOut', 'terminate', 'clear', 'reload']);
     });
   }
 
@@ -26,7 +34,6 @@ void main() {
     var reloaded = false;
     await expectLater(
         clearWebCache(
-          waitForPendingWrites: () async {},
           terminate: () async {},
           clearPersistence: () async =>
               throw StateError('another tab holds cache'),
@@ -35,4 +42,16 @@ void main() {
         throwsStateError);
     expect(reloaded, isFalse);
   });
+}
+
+class _Auth implements FirebaseAuth {
+  _Auth(this.calls);
+
+  final List<String> calls;
+
+  @override
+  Future<void> signOut() async => calls.add('signOut');
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

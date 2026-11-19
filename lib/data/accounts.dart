@@ -35,7 +35,7 @@ abstract class AccountService {
 }
 
 class FirebaseAccountService implements AccountService {
-  FirebaseAccountService({FirebaseAuth? auth, this.onDelete, this.onLogOut}) : _auth = auth ?? FirebaseAuth.instance;
+  FirebaseAccountService({FirebaseAuth? auth, this.onDelete, this.onLogOut, this.beforeLogOut, this.afterDelete}) : _auth = auth ?? FirebaseAuth.instance;
 
   final FirebaseAuth _auth;
 
@@ -43,6 +43,8 @@ class FirebaseAccountService implements AccountService {
   final Future<void> Function(Account)? onDelete;
 
   final Future<void> Function()? onLogOut;
+  final Future<void> Function()? beforeLogOut;
+  final Future<void> Function()? afterDelete;
 
   static Account _account(User u) => Account(uid: u.uid, email: u.email ?? '');
 
@@ -72,6 +74,7 @@ class FirebaseAccountService implements AccountService {
 
   @override
   Future<void> logOut() async {
+    await beforeLogOut?.call();
     await _auth.signOut();
     await onLogOut?.call();
   }
@@ -85,6 +88,7 @@ class FirebaseAccountService implements AccountService {
         );
         await onDelete?.call(_account(user));
         await user.delete();
+        await afterDelete?.call();
         await onLogOut?.call();
       });
 

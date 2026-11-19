@@ -43,10 +43,15 @@ Future<Services> _firebaseServices() async {
   return Services(
     accounts: FirebaseAccountService(
       onDelete: (a) => FirestoreHoursStore(a.uid).delete(),
+      beforeLogOut: kIsWeb ? () => flushWebWrites(
+        waitForPendingWrites: FirebaseFirestore.instance.waitForPendingWrites,
+      ) : null,
+      afterDelete: kIsWeb ? () => flushWebWrites(
+        waitForPendingWrites: FirebaseFirestore.instance.waitForPendingWrites,
+      ) : null,
       onLogOut: kIsWeb ? () {
         final db = FirebaseFirestore.instance;
         return clearWebCache(
-          waitForPendingWrites: db.waitForPendingWrites,
           terminate: db.terminate,
           clearPersistence: db.clearPersistence,
           reload: reloadPage,

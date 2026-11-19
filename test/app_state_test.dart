@@ -56,6 +56,58 @@ void main() {
     expect(state.home.hours.goalHours, 140);
   });
 
+  test('overnight clock-ins split at month end, live and saved', () {
+    clock.now = DateTime(2026, 10, 31, 23, 50);
+    state.punch('sfp');
+    clock.now = DateTime(2026, 11, 1, 0, 10);
+    for (var i = 0; i < 2; i++) {
+      expect(state.summary('sfp', DateTime(2026, 10)).total, 10);
+      expect(state.summary('sfp', DateTime(2026, 11)).total, 10);
+      expect(state.minutesSince('sfp', DateTime(2026, 11)), 10);
+      if (i == 0) state.punch('sfp');
+    }
+    expect(state.home.hours.days.keys, ['2026-10-31', '2026-11-01']);
+    final restored = UserData.fromJson(jsonDecode(state.exportJson()) as Map<String, dynamic>);
+    expect(restored.home.hours.days['2026-10-31']!.sessions.single.minutes, 10);
+    expect(restored.home.hours.days['2026-11-01']!.sessions.single.minutes, 10);
+  });
+
+  test('overnight focus totals stay the same when stopped', () {
+    clock.now = DateTime(2026, 10, 31, 23, 50);
+    state.startTimer('sfp', 30);
+    clock.now = DateTime(2026, 11, 1, 0, 10);
+    for (var i = 0; i < 2; i++) {
+      expect(state.summary('sfp', DateTime(2026, 10)).total, 10);
+      expect(state.summary('sfp', DateTime(2026, 11)).total, 10);
+      expect(state.minutesSince('sfp', DateTime(2026, 11)), 10);
+      expect(state.minutesSince('sfp', DateTime(2026, 12)), 0);
+      if (i == 0) state.stopTimer('sfp');
+    }
+  });
+
+  test('focus totals cap at countdown end before settlement', () {
+    clock.now = DateTime(2026, 10, 31, 23, 50);
+    state.startTimer('sfp', 15);
+    clock.now = DateTime(2026, 11, 1, 1);
+    expect(state.summary('sfp', DateTime(2026, 10)).total, 10);
+    expect(state.summary('sfp', DateTime(2026, 11)).total, 5);
+    state.refresh();
+    expect(state.summary('sfp', DateTime(2026, 10)).total, 10);
+    expect(state.summary('sfp', DateTime(2026, 11)).total, 5);
+  });
+
+  test('multi-day clock-in keeps each local day and excludes an empty end day', () {
+    clock.now = DateTime(2026, 10, 30, 23);
+    state.punch('sfp');
+    clock.now = DateTime(2026, 11, 2);
+    state.punch('sfp');
+    expect(state.savedMinutes('sfp', '2026-10-30'), 60);
+    expect(state.savedMinutes('sfp', '2026-10-31'), 1440);
+    expect(state.savedMinutes('sfp', '2026-11-01'),
+        DateTime(2026, 11, 2).difference(DateTime(2026, 11, 1)).inMinutes);
+    expect(state.home.hours.days.containsKey('2026-11-02'), isFalse);
+  });
+
   test('the chosen wallpaper is saved with the account; unknown ones fall back', () {
     expect(state.wallpaper, WallpaperStyle.photo);
     state.setWallpaper(WallpaperStyle.dusk);

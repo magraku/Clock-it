@@ -25,7 +25,10 @@ class AppState extends ChangeNotifier {
   final Account? account;
   final TimerAlerts alerts;
   final DateTime Function() _clock;
+  Duration _clockOffset = Duration.zero;
   Timer? _ticker;
+  Future<void>? _refreshing;
+  bool _disposed = false;
   StreamSubscription<UserData>? _sync;
 
   UserData _data = UserData.starter();
@@ -36,7 +39,7 @@ class AppState extends ChangeNotifier {
   /// [id]'s goal, or Home's if it was deleted (e.g. from another phone).
   Goal goal(String id) => _data.byId(id) ?? _data.home;
 
-  DateTime get now => _clock();
+  DateTime get now => _clock().add(_clockOffset);
   int get _nowMs => now.millisecondsSinceEpoch;
 
   bool isOpen(String goalId) => goal(goalId).hours.openSince != null;
@@ -52,6 +55,7 @@ class AppState extends ChangeNotifier {
   /// Loads the account's goals. [adopt] (hours saved on this phone before
   /// accounts existed) seeds an account that has nothing yet.
   Future<void> load({UserData? adopt}) async {
+    _clockOffset = await _store.clockOffset(_clock);
     final saved = await _store.load();
     if (saved == null && adopt != null) {
       _data = adopt;
@@ -203,7 +207,7 @@ class AppState extends ChangeNotifier {
     final t = g.timer;
     final since = t?.runningSince;
     if (t == null || since == null) return;
-    final end = _nowMs;
+    final end = _nowMs < since ? since : _nowMs;
     _log(g.hours, since, end);
     t
       ..doneMs += end - since
@@ -257,7 +261,7 @@ class AppState extends ChangeNotifier {
     if (ends == null) return;
     alerts.schedule(
       g.id,
-      DateTime.fromMillisecondsSinceEpoch(ends),
+      DateTime.fromMillisecondsSinceEpoch(ends).subtract(_clockOffset),
       Str.timerDoneTitle,
       Str.timerDoneBody(g.name, fmtHours(g.timer!.totalMs / 60000)),
     );
@@ -266,8 +270,8 @@ class AppState extends ChangeNotifier {
       goal: g.name,
       // As in the app: the goal's colour, or plum on a butter goal.
       color: (g.color == GoalColor.yellow ? Palette.inkDeep : g.color.color).toARGB32() & 0xFFFFFF,
-      start: DateTime.fromMillisecondsSinceEpoch(ends - g.timer!.totalMs),
-      end: DateTime.fromMillisecondsSinceEpoch(ends),
+      start: DateTime.fromMillisecondsSinceEpoch(ends - g.timer!.totalMs).subtract(_clockOffset),
+      end: DateTime.fromMillisecondsSinceEpoch(ends).subtract(_clockOffset),
     ));
   }
 
@@ -292,12 +296,20 @@ class AppState extends ChangeNotifier {
     return true;
   }
 
-  /// Re-reads the clock, e.g. when the app returns to the foreground.
-  void refresh() {
+  /// Recalibrates the clock, e.g. when the app returns to the foreground.
+  Future<void> refresh() => _refreshing ??= _refresh().whenComplete(() => _refreshing = null);
+
+  Future<void> _refresh() async {
+    final offset = await _store.clockOffset(_clock);
+    if (_disposed) return;
+    _clockOffset = offset;
     if (_settleTimers()) {
       _commit();
     } else {
       notifyListeners();
+    }
+    for (final g in _data.goals) {
+      _scheduleAlert(g);
     }
   }
 
@@ -314,6 +326,7 @@ class AppState extends ChangeNotifier {
   void _syncTicker() {
     if (_anythingRunning && _ticker == null) {
       _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (_refreshing != null) return;
         if (_settleTimers()) {
           _commit();
         } else {
@@ -328,6 +341,7 @@ class AppState extends ChangeNotifier {
 
   @override
   void dispose() {
+    _disposed = true;
     _ticker?.cancel();
     _sync?.cancel();
     super.dispose();

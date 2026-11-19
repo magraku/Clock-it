@@ -1,10 +1,45 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:clock_it/logic/time_math.dart';
 import 'package:clock_it/models/hours_data.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  group('local-day intervals', () {
+    test('empty and reversed intervals contribute nothing', () {
+      final start = DateTime(2026, 10, 31, 23, 50).millisecondsSinceEpoch;
+      expect(splitSession(start, start), isEmpty);
+      expect(splitSession(start, start - 1), isEmpty);
+      expect(intervalMinutesOnDay(start, start - 1, '2026-10-31'), 0);
+    });
+
+    test('live multi-day sessions allocate only the selected local day', () {
+      final start = DateTime(2026, 10, 30, 23).millisecondsSinceEpoch;
+      final end = DateTime(2026, 11, 1, 1).millisecondsSinceEpoch;
+      final data = HoursData(openSince: start);
+      expect(dayMinutes(data, '2026-10-30', end), 60);
+      expect(dayMinutes(data, '2026-10-31', end), 1440);
+      expect(dayMinutes(data, '2026-11-01', end), 60);
+      expect(dayMinutes(data, '2026-11-02', end), 0);
+    });
+
+    test('spring and fall boundaries use actual local calendar-day durations', () {
+      for (final date in [DateTime(2026, 3, 8), DateTime(2026, 11, 1)]) {
+        final before = DateTime(date.year, date.month, date.day - 1, 23, 50);
+        final next = DateTime(date.year, date.month, date.day + 1);
+        final after = DateTime(next.year, next.month, next.day, 0, 10);
+        final sessions = splitSession(before.millisecondsSinceEpoch, after.millisecondsSinceEpoch).toList();
+        expect(sessions.map((s) => s.minutes), [10, next.difference(date).inMinutes, 10]);
+        expect(sessions[1].start, date.millisecondsSinceEpoch);
+        expect(sessions[1].end, next.millisecondsSinceEpoch);
+        if (Platform.environment['TZ'] == 'America/New_York') {
+          expect(sessions[1].minutes, date.month == 3 ? 1380 : 1500);
+        }
+      }
+    });
+  });
+
   group('parseDuration', () {
     test('accepts every documented format', () {
       expect(parseDuration('5h'), 300);

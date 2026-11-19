@@ -74,7 +74,26 @@ int? parseDuration(String input) {
   return null;
 }
 
-/// Minutes logged on [key], counting the running session if it started that day.
+/// Splits an interval at local calendar midnights, including DST transitions.
+Iterable<Session> splitSession(int start, int end) sync* {
+  while (start < end) {
+    final date = DateTime.fromMillisecondsSinceEpoch(start);
+    final midnight = DateTime(date.year, date.month, date.day + 1).millisecondsSinceEpoch;
+    final until = end < midnight ? end : midnight;
+    yield Session(start, until);
+    start = until;
+  }
+}
+
+double intervalMinutesOnDay(int start, int end, String key) {
+  var total = 0.0;
+  for (final session in splitSession(start, end)) {
+    if (dayKeyOf(session.start) == key) total += session.minutes;
+  }
+  return total;
+}
+
+/// Minutes logged on [key], including that day's part of a running session.
 double dayMinutes(HoursData data, String key, int nowMs) {
   final d = data.days[key];
   var total = d == null ? 0.0 : d.manualMinutes.toDouble();
@@ -84,7 +103,7 @@ double dayMinutes(HoursData data, String key, int nowMs) {
     }
   }
   final open = data.openSince;
-  if (open != null && dayKeyOf(open) == key) total += (nowMs - open) / 60000;
+  if (open != null) total += intervalMinutesOnDay(open, nowMs, key);
   return total;
 }
 

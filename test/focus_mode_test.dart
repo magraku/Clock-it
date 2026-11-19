@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:clock_it/data/focus_mode.dart';
 import 'package:clock_it/models/goals.dart';
 import 'package:clock_it/state/app_state.dart';
@@ -64,7 +66,7 @@ void main() {
     await Future<void>.delayed(Duration.zero);
     expect(mode.ends, isEmpty);
     state.startTimer('sfp', 10);
-    state.importJson('{"v":2,"goals":[{"id":"sfp","name":"SFP"}]}');
+    expect(state.importJson(jsonEncode(UserData.starter().toJson())), isTrue);
     expect(mode.ends, isEmpty);
     state.dispose();
   });

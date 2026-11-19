@@ -38,11 +38,17 @@ Future<void> main() async {
 Future<Services> _firebaseServices() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   if (kIsWeb) {
-    FirebaseFirestore.instance.settings = const Settings(persistenceEnabled: true);
+    FirebaseFirestore.instance.settings = const Settings(
+      persistenceEnabled: true,
+      webExperimentalForceLongPolling: true,
+    );
   }
   return Services(
     accounts: FirebaseAccountService(
-      onDelete: (a) => FirestoreHoursStore(a.uid).delete(),
+      onDelete: (a) {
+        final deletion = FirestoreHoursStore(a.uid).delete();
+        return kIsWeb ? deletion.timeout(const Duration(seconds: 15)) : deletion;
+      },
       beforeLogOut: kIsWeb ? () => flushWebWrites(
         waitForPendingWrites: FirebaseFirestore.instance.waitForPendingWrites,
       ) : null,

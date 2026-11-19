@@ -85,7 +85,7 @@ class HoursData {
       },
       openSince: j['open'] == null ? null : _toInt(j['open']),
       updatedAt: j['ts'] == null ? 0 : _toInt(j['ts']),
-      goalHours: goal is num && goal > 0 && goal.isFinite ? goal.toDouble() : defaultGoal,
+      goalHours: goal is num && goal.isFinite && goal > 0 ? goal.toDouble() : defaultGoal,
     );
   }
 }

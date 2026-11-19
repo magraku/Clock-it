@@ -518,7 +518,7 @@ class _GoalSheetState extends State<_GoalSheet> {
 
   void _save() {
     final v = double.tryParse(_ctrl.text.trim().replaceAll(',', '.'));
-    if (v == null || v <= 0 || !v.isFinite) {
+    if (v == null || !v.isFinite || v <= 0) {
       setState(() => _error = Str.invalidGoal);
       return;
     }
@@ -639,7 +639,7 @@ class _GoalEditorState extends State<_GoalEditor> {
     final hours = double.tryParse(_hours.text.trim().replaceAll(',', '.'));
     setState(() {
       _nameError = name.isEmpty ? Str.goalNameMissing : null;
-      _hoursError = hours == null || hours <= 0 || !hours.isFinite ? Str.invalidGoal : null;
+      _hoursError = hours == null || !hours.isFinite || hours <= 0 ? Str.invalidGoal : null;
     });
     if (_nameError != null || _hoursError != null) return;
     final g = _goal;

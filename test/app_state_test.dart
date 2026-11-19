@@ -64,13 +64,16 @@ void main() {
     expect(UserData.fromJson({...state.data.toJson(), 'wall': 'neon'}).wallpaper, WallpaperStyle.photo);
   });
 
-  test('an infinite goal, which Firestore stores, still saves and loads', () async {
+  test('an infinite goal is refused, and one saved by an older app reads as the default', () async {
     state.setGoalHours('sfp', double.infinity);
-    expect(store.cloud['u']!['goals'][0]['hours']['goal'], double.infinity);
+    expect(state.home.hours.goalHours, 140);
 
+    final saved = state.data.toJson();
+    saved['goals'][0]['hours']['goal'] = double.infinity;
+    store.cloud['u'] = saved;
     final again = AppState(store, clock: clock.call);
     await again.load();
-    expect(again.home.hours.goalHours, double.infinity);
+    expect(again.home.hours.goalHours, 140);
     again.dispose();
   });
 

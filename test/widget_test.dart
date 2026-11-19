@@ -132,7 +132,7 @@ void main() {
     await settle();
     await tester.tap(find.text(Str.cancel));
     await settle();
-    expect(find.text(Str.moonMode), findsNothing);
+    expect(find.text(Str.cancel), findsNothing);
     expect(find.text('STUDY HOURS'), findsOneWidget);
 
     await tester.tap(find.text(Str.minutesChip(15)));

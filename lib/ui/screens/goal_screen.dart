@@ -115,7 +115,6 @@ class _GoalScreenState extends State<GoalScreen> {
 /// focus timers. Swipe or use the arrows to see other months.
 class _MonthView extends StatelessWidget {
   const _MonthView({
-    super.key,
     required this.state,
     required this.goal,
     required this.month,

@@ -64,7 +64,7 @@ void main() {
     await Future<void>.delayed(Duration.zero);
     expect(mode.ends, isEmpty);
     state.startTimer('sfp', 10);
-    state.importJson('{"v":2,"goals":[]}');
+    state.importJson('{"v":2,"goals":[{"id":"sfp","name":"SFP"}]}');
     expect(mode.ends, isEmpty);
     state.dispose();
   });
@@ -77,8 +77,9 @@ void main() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel,
         (call) async {
       calls.add(call);
-      if (call.method == 'status')
+      if (call.method == 'status') {
         return {'supported': true, 'enabled': true, 'granted': true, 'exact': false, 'active': false};
+      }
       return null;
     });
     addTearDown(() => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger

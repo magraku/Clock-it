@@ -56,6 +56,37 @@ void main() {
     expect(state.home.hours.goalHours, 140);
   });
 
+  test('monthly goal setter ignores non-finite and non-positive hours', () {
+    for (final hours in [double.nan, double.infinity, double.negativeInfinity, 0.0, -1.0]) {
+      state.setGoalHours('sfp', hours);
+      expect(state.home.hours.goalHours, 140);
+      expect(store.cloud, isEmpty);
+    }
+    state.setGoalHours('sfp', 12.5);
+    expect(state.home.hours.goalHours, 12.5);
+    expect(store.cloud['u'], isNotNull);
+  });
+
+  test('goal creation and edits never store invalid monthly hours', () {
+    for (final hours in [double.nan, double.infinity, double.negativeInfinity, 0.0, -1.0]) {
+      final goal = state.createGoal('Study', GoalColor.green, hours);
+      expect(goal.hours.goalHours, Goal.defaultHours);
+      state.updateGoal('sfp', monthlyHours: hours);
+      expect(state.home.hours.goalHours, 140);
+    }
+    final goal = state.createGoal('Gym', GoalColor.pink, 5.5);
+    expect(goal.hours.goalHours, 5.5);
+    state.updateGoal(goal.id, monthlyHours: 10.5);
+    expect(goal.hours.goalHours, 10.5);
+  });
+
+  test('backup goal hours default when missing or invalid', () {
+    for (final hours in [null, double.nan, double.infinity, double.negativeInfinity, 0, -1]) {
+      expect(HoursData.fromJson({'days': {}, 'goal': hours}).goalHours, HoursData.defaultGoal);
+    }
+    expect(HoursData.fromJson({'days': {}, 'goal': 12.5}).goalHours, 12.5);
+  });
+
   test('the chosen wallpaper is saved with the account; unknown ones fall back', () {
     expect(state.wallpaper, WallpaperStyle.photo);
     state.setWallpaper(WallpaperStyle.dusk);

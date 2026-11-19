@@ -47,6 +47,9 @@ dart run flutter_native_splash:create
 - **Pantalla bloqueada**: mientras corre un cronómetro, el reloj de arena y la cuenta regresiva se
   ven en la pantalla bloqueada y en la Dynamic Island (Live Activity, extensión `ios/FocusTimer`,
   iOS 16.2+), y en Android como notificación fija con cuenta regresiva.
+  En Android debes permitir también las notificaciones **silenciosas** en la pantalla
+  bloqueada; No molestar puede ocultarlas según sus opciones de visualización. La app
+  respeta esos ajustes y no cambia la privacidad de la pantalla bloqueada.
 - **Home**: el calendario de la meta de Home.
   - **Mark entry / Mark exit**: botón grande; dentro muestra "Entraste a las 13:44 · 00:56:56" en vivo, fuera las horas de hoy. Varias veces al día.
   - **Hours left to do**: lo que falta para la meta del mes, con barra de progreso.

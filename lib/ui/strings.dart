@@ -143,8 +143,8 @@ abstract final class Str {
         'El navegador no puede silenciar tu teléfono ni mostrar el cronómetro en la pantalla bloqueada. Usa Concentración o No molestar en tu dispositivo.',
       );
   static String get lockScreenHelp => _t(
-        'On the mobile app, allow notifications / Live Activities for the lock-screen countdown. Do Not Disturb may silence the final alert.',
-        'En la app móvil, permite las notificaciones o Actividades en vivo para ver la cuenta atrás al bloquear. No molestar puede silenciar el aviso final.',
+        'On Android, show silent notifications on the lock screen and check whether Do Not Disturb hides them. On iPhone, allow Live Activities. Quiet mode may silence the final alert.',
+        'En Android, muestra las notificaciones silenciosas al bloquear y revisa si No molestar las oculta. En iPhone, permite Actividades en vivo. El modo silencio puede silenciar el aviso final.',
       );
   static String get moonAuto => _t('Do Not Disturb during focus', 'No molestar al concentrarme');
   static String get moonAutoHelp => _t(

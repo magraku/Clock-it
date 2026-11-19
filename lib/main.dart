@@ -9,6 +9,8 @@ import 'data/accounts.dart';
 import 'data/demo_accounts.dart';
 import 'data/hours_store.dart';
 import 'data/timer_alerts.dart';
+import 'data/web_cache_cleanup.dart';
+import 'data/reload_stub.dart' if (dart.library.js_interop) 'data/reload_web.dart';
 import 'firebase_options.dart';
 import 'state/session.dart';
 import 'ui/screens/intro_screens.dart';
@@ -39,7 +41,18 @@ Future<Services> _firebaseServices() async {
     FirebaseFirestore.instance.settings = const Settings(persistenceEnabled: true);
   }
   return Services(
-    accounts: FirebaseAccountService(onDelete: (a) => FirestoreHoursStore(a.uid).delete()),
+    accounts: FirebaseAccountService(
+      onDelete: (a) => FirestoreHoursStore(a.uid).delete(),
+      onLogOut: kIsWeb ? () {
+        final db = FirebaseFirestore.instance;
+        return clearWebCache(
+          waitForPendingWrites: db.waitForPendingWrites,
+          terminate: db.terminate,
+          clearPersistence: db.clearPersistence,
+          reload: reloadPage,
+        );
+      } : null,
+    ),
     storeFor: (a) => FirestoreHoursStore(a.uid),
     legacy: LocalHoursStore(),
     alerts: kIsWeb ? const NoTimerAlerts() : LocalTimerAlerts(),

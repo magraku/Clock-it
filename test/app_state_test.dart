@@ -64,6 +64,16 @@ void main() {
     expect(UserData.fromJson({...state.data.toJson(), 'wall': 'neon'}).wallpaper, WallpaperStyle.photo);
   });
 
+  test('an infinite goal, which Firestore stores, still saves and loads', () async {
+    state.setGoalHours('sfp', double.infinity);
+    expect(store.cloud['u']!['goals'][0]['hours']['goal'], double.infinity);
+
+    final again = AppState(store, clock: clock.call);
+    await again.load();
+    expect(again.home.hours.goalHours, double.infinity);
+    again.dispose();
+  });
+
   test('adopts each copy saved elsewhere, whatever its stamp', () async {
     state.setGoalHours('sfp', 120); // saved at 10:00
 

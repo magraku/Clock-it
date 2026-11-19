@@ -30,9 +30,12 @@ class AppState extends ChangeNotifier {
 
   UserData _data = UserData.starter();
 
-  /// The copy last saved to or received from the store, as JSON, so an echo
-  /// of it is not mistaken for another device's edit.
+  /// The copy last saved to or received from the store, so an echo of it is
+  /// not mistaken for another device's edit.
   String? _synced;
+
+  /// Not `jsonEncode`: it rejects a non-finite goal, which Firestore stores.
+  static String _fingerprint(UserData d) => '${d.toJson()}';
   UserData get data => _data;
   List<Goal> get goals => _data.goals;
   Goal get home => _data.home;
@@ -62,7 +65,7 @@ class AppState extends ChangeNotifier {
       _commit();
     } else {
       _data = saved ?? UserData.starter();
-      if (saved != null) _synced = jsonEncode(saved.toJson());
+      if (saved != null) _synced = _fingerprint(saved);
     }
     _sync ??= _store.changes().listen(_onRemote);
     _settleTimers();
@@ -74,9 +77,9 @@ class AppState extends ChangeNotifier {
   /// order it saved them, so the latest one wins; the devices' `ts` stamps are
   /// not compared because their clocks can disagree by minutes.
   void _onRemote(UserData remote) {
-    final json = jsonEncode(remote.toJson());
-    if (json == _synced) return;
-    _synced = json;
+    final fingerprint = _fingerprint(remote);
+    if (fingerprint == _synced) return;
+    _synced = fingerprint;
     _data = remote;
     _syncTicker();
     notifyListeners();
@@ -314,7 +317,7 @@ class AppState extends ChangeNotifier {
     // Never behind the copy this one replaces, so older app versions, which
     // keep the copy with the higher stamp, accept it.
     _data.updatedAt = _nowMs > _data.updatedAt ? _nowMs : _data.updatedAt + 1;
-    _synced = jsonEncode(_data.toJson());
+    _synced = _fingerprint(_data);
     _store.save(_data);
     _syncTicker();
     notifyListeners();

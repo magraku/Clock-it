@@ -91,7 +91,7 @@ object FocusMode {
             .showPeeking(shows(NotificationManager.Policy.SUPPRESSED_EFFECT_PEEK))
             .showStatusBarIcons(shows(NotificationManager.Policy.SUPPRESSED_EFFECT_STATUS_BAR))
             .showBadges(shows(NotificationManager.Policy.SUPPRESSED_EFFECT_BADGE))
-            .showAmbient(shows(NotificationManager.Policy.SUPPRESSED_EFFECT_AMBIENT))
+            .showInAmbientDisplay(shows(NotificationManager.Policy.SUPPRESSED_EFFECT_AMBIENT))
             .showInNotificationList(shows(NotificationManager.Policy.SUPPRESSED_EFFECT_NOTIFICATION_LIST))
         if (Build.VERSION.SDK_INT >= 30) {
             builder.allowConversations(if (allows(NotificationManager.Policy.PRIORITY_CATEGORY_CONVERSATIONS))
@@ -124,7 +124,8 @@ object FocusMode {
             if (id == null || nm.getAutomaticZenRule(id) == null) {
                 val rule = if (Build.VERSION.SDK_INT >= 29) {
                     AutomaticZenRule("Clock it · Focus", null,
-                        ComponentName(context, MainActivity::class.java), conditionId, priorityPolicy(context),
+                        ComponentName(context, MainActivity::class.java), conditionId,
+                        if (Build.VERSION.SDK_INT >= 35) priorityPolicy(context) else null,
                         NotificationManager.INTERRUPTION_FILTER_PRIORITY, true)
                 } else {
                     AutomaticZenRule("Clock it · Focus", ComponentName(context, FocusConditionProvider::class.java),
@@ -160,6 +161,7 @@ class FocusConditionProvider : ConditionProviderService() {
         notifyCondition(FocusMode.condition(this))
     }
     override fun onSubscribe(conditionId: Uri) { notifyCondition(FocusMode.condition(this)) }
+    override fun onUnsubscribe(conditionId: Uri) {}
     override fun onDestroy() { instance = null; super.onDestroy() }
 
     companion object {

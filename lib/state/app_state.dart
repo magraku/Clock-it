@@ -29,6 +29,10 @@ class AppState extends ChangeNotifier {
   StreamSubscription<UserData>? _sync;
 
   UserData _data = UserData.starter();
+
+  /// The copy last saved to or received from the store, as JSON, so an echo
+  /// of it is not mistaken for another device's edit.
+  String? _synced;
   UserData get data => _data;
   List<Goal> get goals => _data.goals;
   Goal get home => _data.home;
@@ -58,6 +62,7 @@ class AppState extends ChangeNotifier {
       _commit();
     } else {
       _data = saved ?? UserData.starter();
+      if (saved != null) _synced = jsonEncode(saved.toJson());
     }
     _sync ??= _store.changes().listen(_onRemote);
     _settleTimers();
@@ -65,9 +70,13 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Keeps whichever copy was saved last, like the web version.
+  /// Adopts each copy the store delivers. The store hands them over in the
+  /// order it saved them, so the latest one wins; the devices' `ts` stamps are
+  /// not compared because their clocks can disagree by minutes.
   void _onRemote(UserData remote) {
-    if (remote.updatedAt <= _data.updatedAt) return;
+    final json = jsonEncode(remote.toJson());
+    if (json == _synced) return;
+    _synced = json;
     _data = remote;
     _syncTicker();
     notifyListeners();
@@ -302,7 +311,10 @@ class AppState extends ChangeNotifier {
   }
 
   void _commit() {
-    _data.updatedAt = _nowMs;
+    // Never behind the copy this one replaces, so older app versions, which
+    // keep the copy with the higher stamp, accept it.
+    _data.updatedAt = _nowMs > _data.updatedAt ? _nowMs : _data.updatedAt + 1;
+    _synced = jsonEncode(_data.toJson());
     _store.save(_data);
     _syncTicker();
     notifyListeners();

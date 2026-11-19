@@ -64,19 +64,17 @@ void main() {
     expect(UserData.fromJson({...state.data.toJson(), 'wall': 'neon'}).wallpaper, WallpaperStyle.photo);
   });
 
-  test('keeps whichever copy was saved last', () async {
+  test('adopts each copy saved elsewhere, whatever its stamp', () async {
     state.setGoalHours('sfp', 120); // saved at 10:00
 
-    final older = UserData.starter(sfp: HoursData(goalHours: 100))..updatedAt = 1;
-    store.remote.add(older);
+    final stampedEarlier = UserData.starter(sfp: HoursData(goalHours: 100))..updatedAt = 1;
+    store.remote.add(stampedEarlier);
     await Future<void>.delayed(Duration.zero);
-    expect(state.home.hours.goalHours, 120);
+    expect(state.home.hours.goalHours, 100);
 
-    final newer = UserData.starter(sfp: HoursData(goalHours: 90))
-      ..updatedAt = DateTime(2026, 10, 12, 11).millisecondsSinceEpoch;
-    store.remote.add(newer);
-    await Future<void>.delayed(Duration.zero);
-    expect(state.home.hours.goalHours, 90);
+    state.setGoalHours('sfp', 90);
+    expect(state.data.updatedAt, clock.now.millisecondsSinceEpoch);
+    expect(UserData.fromJson(store.cloud['u']!).home.hours.goalHours, 90);
   });
 
   test('each goal keeps its own hours; Home can move and the last goal stays', () {

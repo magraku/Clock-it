@@ -2,6 +2,7 @@ import 'package:clock_it/main.dart';
 import 'package:clock_it/models/goals.dart';
 import 'package:clock_it/state/app_state.dart';
 import 'package:clock_it/ui/screens/history_screen.dart';
+import 'package:clock_it/ui/sheets.dart';
 import 'package:clock_it/ui/strings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -46,6 +47,61 @@ void main() {
     await pumpUntilFound(tester, find.text(Str.logIn));
     await tester.pumpAndSettle();
   }
+
+  testWidgets('monthly goal sheet rejects invalid hours and accepts finite positive hours', (tester) async {
+    final state = AppState(MemoryStore({}, 'u'));
+    await state.load();
+    addTearDown(state.dispose);
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(body: Builder(builder: (context) => TextButton(
+        onPressed: () => showGoalSheet(context, state, 'sfp', DateTime(2026, 10)),
+        child: const Text('Open goal'),
+      ))),
+    ));
+    await tester.tap(find.text('Open goal'));
+    await tester.pumpAndSettle();
+    for (final input in ['NaN', 'Infinity', '-Infinity', '1e999', '0', '-1', '']) {
+      await tester.enterText(find.byType(TextField), input);
+      await tester.tap(find.text(Str.save));
+      await tester.pumpAndSettle();
+      expect(find.text(Str.invalidGoal), findsOneWidget);
+      expect(state.home.hours.goalHours, 140);
+      expect(tester.takeException(), isNull);
+    }
+    await tester.enterText(find.byType(TextField), '12,5');
+    await tester.tap(find.text(Str.save));
+    await tester.pumpAndSettle();
+    expect(state.home.hours.goalHours, 12.5);
+    expect(find.byType(TextField), findsNothing);
+  });
+
+  testWidgets('goal editor rejects non-finite hours', (tester) async {
+    final state = AppState(MemoryStore({}, 'u'));
+    await state.load();
+    addTearDown(state.dispose);
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(body: Builder(builder: (context) => TextButton(
+        onPressed: () => showGoalEditor(context, state, goal: state.home),
+        child: const Text('Open editor'),
+      ))),
+    ));
+    await tester.tap(find.text('Open editor'));
+    await tester.pumpAndSettle();
+    for (final input in ['NaN', 'Infinity', '-Infinity', '1e999', '0', '-1', '']) {
+      await tester.enterText(find.byType(TextField).last, input);
+      await tester.tap(find.text(Str.save));
+      await tester.pumpAndSettle();
+      expect(find.text(Str.invalidGoal), findsOneWidget);
+      expect(state.home.hours.goalHours, 140);
+    }
+    await tester.enterText(find.byType(TextField).last, '12.5');
+    await tester.tap(find.text(Str.save));
+    await tester.pumpAndSettle();
+    expect(state.home.hours.goalHours, 12.5);
+    expect(find.byType(TextField), findsNothing);
+  });
 
   testWidgets('each account keeps its own hours', (tester) async {
     SharedPreferences.setMockInitialValues({});

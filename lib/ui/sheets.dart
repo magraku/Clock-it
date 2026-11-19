@@ -925,7 +925,9 @@ class _BackupSheet extends StatelessWidget {
       ),
     );
     if (ok != true || !context.mounted) return;
-    _closeWith(context, state.importJson(text) ? Str.imported : Str.importFailed);
+    final imported = await state.importJson(text);
+    if (!context.mounted) return;
+    _closeWith(context, imported ? Str.imported : Str.importFailed);
   }
 
   @override

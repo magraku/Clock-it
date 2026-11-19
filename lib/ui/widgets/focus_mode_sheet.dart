@@ -8,6 +8,7 @@ import '../theme.dart';
 
 Future<void> showFocusModeSheet(BuildContext context, AppState state) => showModalBottomSheet<void>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       showDragHandle: true,
       backgroundColor: Palette.cream,

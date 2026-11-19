@@ -128,6 +128,13 @@ void main() {
     expect(find.text(Str.focusTitle), findsOneWidget);
     expect(find.text('15:00'), findsOneWidget);
 
+    await tester.tap(find.byTooltip(Str.moonHint));
+    await settle();
+    await tester.tap(find.text(Str.cancel));
+    await settle();
+    expect(find.text(Str.moonMode), findsNothing);
+    expect(find.text('STUDY HOURS'), findsOneWidget);
+
     await tester.tap(find.text(Str.minutesChip(15)));
     await settle();
     expect(find.text(Str.start), findsOneWidget);

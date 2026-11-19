@@ -67,6 +67,10 @@ void main() {
   test('an infinite goal is refused, and one saved by an older app reads as the default', () async {
     state.setGoalHours('sfp', double.infinity);
     expect(state.home.hours.goalHours, 140);
+    final g = state.createGoal('Gym', GoalColor.values.first, double.nan);
+    expect(g.hours.goalHours, Goal.defaultHours);
+    state.updateGoal(g.id, monthlyHours: double.infinity);
+    expect(state.goal(g.id).hours.goalHours, Goal.defaultHours);
 
     final saved = state.data.toJson();
     saved['goals'][0]['hours']['goal'] = double.infinity;

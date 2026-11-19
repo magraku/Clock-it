@@ -31,10 +31,19 @@ dart run flutter_native_splash:create
   sale en Home.
 - **Pantalla de una meta**: el título se ajusta al logo (si es largo, el logo y la letra se achican).
   Debajo, el calendario del mes con las horas de cada día, solo para ver: se llena con los
-  cronómetros. **Cronómetro** (Timer en inglés) con 15/20/30 min: al elegir uno aparece el reloj de arena (cuatro
-  estilos para elegir a la derecha: Classic, Glass, Line, Grains) y **Start**. Al presionarlo el
-  reloj se da vuelta y la arena empieza a caer; **Stop** lo corta antes. El tiempo se suma a las
-  horas de esa meta y llega un aviso al terminar, aunque la app esté cerrada.
+  cronómetros. **Concentración** con 10/15/20/30 min: el reloj de arena es interactivo;
+  tócalo o pulsa **Empezar** para verlo girar y dejar caer la arena. La cuenta atrás y la barra
+  muestran lo que falta. Toca otra vez para **Pausar** o **Continuar**; el botón cuadrado termina
+  la sesión antes. Solo se suma el tiempo de concentración, no las pausas. Los cuatro estilos
+  siguen disponibles y **Tu mes** abre el calendario sin interrumpir la sesión.
+- **No molestar**: toca la luna en la tarjeta del reloj. En Android es opcional y requiere
+  acceso a No molestar y, desde Android 12, permiso de alarmas y recordatorios para desactivarse
+  con la pantalla bloqueada. Clock it crea su propia regla de prioridad, la quita al pausar o
+  terminar el último cronómetro y no cambia tus otras reglas ni el modo manual. Los contactos
+  prioritarios y alarmas siguen los ajustes del sistema. No fuerces la detención de la app ni
+  revoques el permiso de alarmas durante la sesión: Android cancela sus alarmas; en ese caso
+  desactiva la regla «Clock it · Focus» desde Ajustes. En iPhone se activa manualmente desde
+  Centro de control → Concentración → No molestar; en web, desde el dispositivo.
 - **Pantalla bloqueada**: mientras corre un cronómetro, el reloj de arena y la cuenta regresiva se
   ven en la pantalla bloqueada y en la Dynamic Island (Live Activity, extensión `ios/FocusTimer`,
   iOS 16.2+), y en Android como notificación fija con cuenta regresiva.

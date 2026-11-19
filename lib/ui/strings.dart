@@ -110,6 +110,54 @@ abstract final class Str {
   static String timerSemantics(String left) => _t('Hourglass, $left left', 'Reloj de arena, quedan $left');
   static String get focusTimeLeft => _t('Focus time left', 'Tiempo de concentración restante');
 
+  static String get focusTitle => _t('A little time. All yours.', 'Un momento. Solo para ti.');
+  static String get focusSubtitle => _t('One task, one grain at a time.', 'Una tarea, un granito a la vez.');
+  static String get focusReady => _t('READY TO FOCUS', 'TODO LISTO');
+  static String get focusRunning => _t('IN YOUR FLOW', 'EN CONCENTRACIÓN');
+  static String get focusPaused => _t('TAKE A BREATH', 'TOMA UN RESPIRO');
+  static String get pause => _t('Pause', 'Pausar');
+  static String get resume => _t('Resume', 'Continuar');
+  static String get tapGlass => _t('Tap the hourglass to begin', 'Toca el reloj para empezar');
+  static String get tapPause => _t('Tap the hourglass to pause', 'Toca el reloj para pausar');
+  static String get tapResume => _t('Tap the hourglass to resume', 'Toca el reloj para continuar');
+  static String get glassStyle => _t('Make it your own', 'Hazlo tuyo');
+  static String get focusSaved =>
+      _t('Your focus time is saved to this goal.', 'Tu tiempo se guarda en esta meta.');
+  static String get focusCalendar => _t('Your month', 'Tu mes');
+  static String get moonMode => _t('A quieter space', 'Un espacio sin distracciones');
+  static String get moonHint => _t('Set up Do Not Disturb', 'Configura No molestar');
+  static String get moonManual => _t(
+        'Clock it cannot turn on Do Not Disturb for you. Enable it on your phone before starting; turn it off when you finish.',
+        'Clock it no puede activar No molestar por ti. Actívalo en tu teléfono antes de empezar y desactívalo al terminar.',
+      );
+  static String get moonIos => _t(
+        'Open Control Center → Focus → Do Not Disturb. Choose a duration there if you want it to end automatically.',
+        'Abre el Centro de control → Concentración → No molestar. Elige allí una duración si quieres que termine automáticamente.',
+      );
+  static String get moonAndroid => _t(
+        'Open Quick Settings → Do Not Disturb (or Modes). You can choose its duration in your phone settings.',
+        'Abre los ajustes rápidos → No molestar (o Modos). Puedes elegir su duración en los ajustes del teléfono.',
+      );
+  static String get moonWeb => _t(
+        'This browser cannot silence your phone or show a lock-screen countdown. Use your device’s Focus or Do Not Disturb controls.',
+        'El navegador no puede silenciar tu teléfono ni mostrar el cronómetro en la pantalla bloqueada. Usa Concentración o No molestar en tu dispositivo.',
+      );
+  static String get lockScreenHelp => _t(
+        'On the mobile app, allow notifications / Live Activities for the lock-screen countdown. Do Not Disturb may silence the final alert.',
+        'En la app móvil, permite las notificaciones o Actividades en vivo para ver la cuenta atrás al bloquear. No molestar puede silenciar el aviso final.',
+      );
+  static String get moonAuto => _t('Do Not Disturb during focus', 'No molestar al concentrarme');
+  static String get moonAutoHelp => _t(
+        'Clock it adds its own Do Not Disturb rule while a timer runs. It removes only that rule when all timers pause or finish, keeping your other modes unchanged. Priority contacts and alarms follow your phone settings.',
+        'Clock it añade su propia regla No molestar mientras corre un cronómetro. Al pausar o terminar todos, elimina solo esa regla y mantiene tus otros modos. Los contactos prioritarios y las alarmas siguen los ajustes del teléfono.',
+      );
+  static String get moonAccess => _t('Allow Do Not Disturb access', 'Permitir acceso a No molestar');
+  static String get moonExact => _t('Allow alarms & reminders', 'Permitir alarmas y recordatorios');
+  static String get moonPermissionHelp => _t(
+        'Two permissions keep this optional mode safe: Do Not Disturb access and alarms & reminders, so the rule can end even with the screen locked. The timer works without them.',
+        'Dos permisos permiten usar este modo opcional: acceso a No molestar y alarmas y recordatorios, para que la regla termine incluso con la pantalla bloqueada. El cronómetro funciona sin ellos.',
+      );
+
   // Goal editor
   static String get newGoal => _t('New goal', 'Nueva meta');
   static String get editGoal => _t('Edit goal', 'Editar meta');

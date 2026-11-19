@@ -39,6 +39,7 @@ class Hourglass extends StatefulWidget {
 class _HourglassState extends State<Hourglass> with TickerProviderStateMixin {
   late final _flow = AnimationController(vsync: this, duration: const Duration(milliseconds: 900));
   late final _flip = AnimationController(vsync: this, duration: const Duration(milliseconds: 750));
+  bool _reduced = false;
 
   @override
   void initState() {
@@ -49,13 +50,21 @@ class _HourglassState extends State<Hourglass> with TickerProviderStateMixin {
   @override
   void didUpdateWidget(Hourglass old) {
     super.didUpdateWidget(old);
-    if (old.ready && !widget.ready && widget.running) _flip.forward(from: 0);
+    if (!_reduced && old.ready && !widget.ready && widget.running) _flip.forward(from: 0);
+    _sync();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _reduced = MediaQuery.disableAnimationsOf(context);
+    if (_reduced) _flip.stop();
     _sync();
   }
 
   void _sync() {
-    if (widget.running && !_flow.isAnimating) _flow.repeat();
-    if (!widget.running && _flow.isAnimating) _flow.stop();
+    if (widget.running && !_reduced && !_flow.isAnimating) _flow.repeat();
+    if ((!widget.running || _reduced) && _flow.isAnimating) _flow.stop();
   }
 
   @override
@@ -75,7 +84,7 @@ class _HourglassState extends State<Hourglass> with TickerProviderStateMixin {
         builder: (context, _) {
           final flipping = !still && _flip.isAnimating;
           final progress = widget.ready || flipping ? 1.0 : widget.progress().clamp(0.0, 1.0);
-          final turn = flipping ? Curves.easeInOutBack.transform(_flip.value) * pi : 0.0;
+          final turn = flipping ? Curves.easeInOutCubic.transform(_flip.value) * pi : 0.0;
           return Transform.rotate(
             angle: turn,
             child: CustomPaint(

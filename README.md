@@ -86,8 +86,14 @@ assets/
 
 Proyecto `clock-it-83703`. Cada cuenta (correo y contraseña) guarda todas sus metas en un documento
 `users/{uid}`; las reglas de `firestore.rules` solo dejan a cada persona leer y escribir el suyo.
-En la web (`flutter run -d chrome`) la app no usa Firebase: las cuentas son de prueba y quedan en
-el navegador.
+La web (`flutter run -d chrome`) usa las mismas cuentas y el mismo historial de horas que los
+teléfonos. No necesita scripts de Firebase adicionales en `web/index.html`.
+Mientras se registra una app web en Firebase, usa la configuración de Android con
+`authDomain: clock-it-83703.firebaseapp.com`. Para sustituir la clave y el identificador web,
+compila con `--dart-define=FIREBASE_WEB_API_KEY=... --dart-define=FIREBASE_WEB_APP_ID=...`.
+
+Para revisar el diseño sin Firebase: `flutter run -d chrome --dart-define=CLOCKIT_DEMO=true`.
+En este modo las cuentas son de prueba y sus horas quedan solo en el navegador, sin sincronizar.
 
 ## Pendiente
 

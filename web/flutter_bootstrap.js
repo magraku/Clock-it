@@ -1,9 +1,4 @@
 {{flutter_js}}
 {{flutter_build_config}}
 
-_flutter.loader.load({
-  config: {
-    canvasKitBaseUrl: new URL("canvaskit/", document.baseURI).href,
-    fontFallbackBaseUrl: new URL("font-fallbacks/", document.baseURI).href,
-  },
-});
+_flutter.loader.load();

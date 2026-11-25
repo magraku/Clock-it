@@ -19,4 +19,4 @@
 
 ## Compilar para la web
 
-Usar `bash scripts/vercel-build.sh install` y `bash scripts/vercel-build.sh build` (el mismo proceso que Vercel). Un `flutter build web` directo no copia las fuentes Noto de respaldo. Al actualizar Flutter, verificar el paquete `flutter/flutter_font_fallbacks` en el archivo `DEPS` del SDK y actualizar la versión y la suma de comprobación del script si cambian.
+Usar `bash scripts/vercel-build.sh install` y `bash scripts/vercel-build.sh build` (el mismo proceso que Vercel). `flutter run -d chrome` y un `flutter build web` directo conservan las fuentes de respaldo predeterminadas del SDK; solo el script de despliegue copia y activa las fuentes Noto locales. Al actualizar Flutter, verificar el paquete `flutter/flutter_font_fallbacks` en el archivo `DEPS` del SDK y actualizar la versión y la suma de comprobación del script si cambian.

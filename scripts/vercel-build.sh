@@ -20,7 +20,7 @@ download_checked() {
   fi
 }
 
-copy_fallback_fonts() {
+configure_local_fallback_fonts() {
   local output="$PWD/build/web/font-fallbacks"
   local noto="$cache_dir/font-fallbacks.zip"
 
@@ -29,6 +29,8 @@ copy_fallback_fonts() {
     "$noto" 7dfb35718596d45cf31b442bc33e313fde4987a2037d6765405170782e0da83c
   mkdir -p "$output"
   unzip -oq "$noto" 'LICENSE.txt' '*.woff2' -d "$output"
+  sed -i 's|^_flutter\.loader\.load();$|_flutter.loader.load({config: {fontFallbackBaseUrl: new URL("font-fallbacks/", document.baseURI).href}});|' \
+    build/web/flutter_bootstrap.js
 }
 
 case "${1:-}" in
@@ -50,7 +52,7 @@ case "${1:-}" in
     ;;
   build)
     "$flutter" build web --release --no-pub --no-web-resources-cdn
-    copy_fallback_fonts
+    configure_local_fallback_fonts
     ;;
   *)
     printf 'Usage: %s {install|build}\n' "$0" >&2

@@ -26,6 +26,68 @@ abstract final class Str {
         'Your hours are saved to your account, so you can see them on any phone.',
         'Tus horas se guardan en tu cuenta, así las ves en cualquier teléfono.',
       );
+  static String get confirmAge => _t('I am at least 16 years old.', 'Tengo al menos 16 años.');
+  static String get acceptTerms => _t(
+        'I accept the Terms of Use and acknowledge the Privacy Notice.',
+        'Acepto las Condiciones de uso y confirmo que he leído el Aviso de privacidad.',
+      );
+  static String get ageRequired => _t(
+        'Confirm that you are at least 16 to create an account.',
+        'Confirma que tienes al menos 16 años para crear una cuenta.',
+      );
+  static String get termsRequired => _t(
+        'Accept the terms and acknowledge the privacy notice to continue.',
+        'Acepta las condiciones y confirma que has leído el aviso de privacidad para continuar.',
+      );
+  static String get legal => _t('Privacy and terms', 'Privacidad y condiciones');
+  static String get privacyTitle => _t('Privacy Notice', 'Aviso de privacidad');
+  static String get termsTitle => _t('Terms of Use', 'Condiciones de uso');
+  static String get privacyNotice => _t(
+        'Clock it processes your email and account ID, work hours and sessions, goals, and preferences '
+            'to provide and sync the service you request under the Terms of Use. We have a legitimate '
+            'interest in using technical data to keep the service secure. Signup asks you to confirm your age '
+            'without collecting your date of birth. Password reset emails are sent only on request.\n\n'
+            'Google Firebase provides authentication and database storage, and Vercel hosts the web app. '
+            'They may process IP addresses and other technical data needed to deliver and secure the service. '
+            'The app uses device storage to keep you signed in and cache your data; it does not use '
+            'advertising cookies, marketing analytics, or session replay.\n\n'
+            'Your account and work records are kept while you use the service. In Profile, use Backup to '
+            'export your goals and hours, or Delete account to remove your account and its synced data. '
+            'Deleting your account does not delete backup files you downloaded yourself.\n\n'
+            'Depending on your circumstances, EU data protection law gives you rights to access, correct, '
+            'erase, or obtain a copy of your personal data, restrict or object to certain processing, '
+            'and lodge a complaint with your data protection authority.',
+        'Clock it trata tu correo e identificador de cuenta, horas y sesiones de trabajo, metas y '
+            'preferencias para prestar y sincronizar el servicio que solicitas conforme a las Condiciones '
+            'de uso. Tenemos un interés legítimo en usar datos técnicos para proteger el servicio. Al registrarte '
+            'te pedimos que confirmes tu edad sin recoger tu fecha de nacimiento. Solo enviamos correos '
+            'de restablecimiento de contraseña si los solicitas.\n\n'
+            'Google Firebase presta los servicios de autenticación y almacenamiento, y Vercel aloja la '
+            'aplicación web. Estos proveedores pueden tratar direcciones IP y otros datos técnicos '
+            'necesarios para prestar y proteger el servicio. La aplicación usa almacenamiento en tu '
+            'dispositivo para mantener tu sesión y guardar datos en caché; no usa cookies publicitarias, '
+            'analítica de marketing ni grabaciones de sesiones.\n\n'
+            'Tu cuenta y tus registros se conservan mientras usas el servicio. En Perfil, usa Respaldo '
+            'para exportar tus metas y horas, o Borrar cuenta para eliminar tu cuenta y los datos '
+            'sincronizados. Borrar la cuenta no elimina los archivos de respaldo que hayas descargado.\n\n'
+            'Según tus circunstancias, la normativa europea te permite acceder a tus datos personales, '
+            'rectificarlos, suprimirlos u obtener una copia, limitar determinados tratamientos u oponerte '
+            'a ellos y reclamar ante tu autoridad de protección de datos.',
+      );
+  static String get termsOfUse => _t(
+        'Clock it lets you track your own work hours and goals. You must be at least 16 years old to '
+            'create an account. Keep your credentials private and do not access other people’s accounts '
+            'or interfere with the service.\n\n'
+            'Check your time records before relying on them and keep a backup if you need one. '
+            'You can stop using the service and delete your account from Profile. These terms do not '
+            'limit any rights you have under applicable law.',
+        'Clock it te permite registrar tus propias horas de trabajo y metas. Debes tener al menos 16 '
+            'años para crear una cuenta. Mantén tus credenciales en privado y no accedas a cuentas '
+            'ajenas ni interfieras con el servicio.\n\n'
+            'Revisa tus registros antes de usarlos y guarda un respaldo si lo necesitas. Puedes dejar '
+            'de usar el servicio y borrar tu cuenta desde Perfil. Estas condiciones no limitan los '
+            'derechos que te reconoce la ley aplicable.',
+      );
   static String get email => _t('Email', 'Correo');
   static String get password => _t('Password', 'Contraseña');
   static String get passwordHint => _t('At least 6 characters', 'Mínimo 6 caracteres');

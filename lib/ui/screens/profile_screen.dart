@@ -9,6 +9,7 @@ import '../widgets/common.dart';
 import '../widgets/nav_bar.dart';
 import '../widgets/title_header.dart';
 import 'history_screen.dart';
+import 'legal_screen.dart';
 
 /// Not in the design: built like a goal's screen (title pill and logo, then
 /// cards) with the account, the backup and leaving.
@@ -90,6 +91,11 @@ class ProfileScreen extends StatelessWidget {
                           icon: Icons.wallpaper, label: Str.wallpaper, onTap: () => showWallpaperSheet(context, state)),
                       _Row(
                           icon: Icons.save_alt_outlined, label: Str.backup, onTap: () => showBackupSheet(context, state)),
+                      _Row(
+                        icon: Icons.policy_outlined,
+                        label: Str.legal,
+                        onTap: () => showLegalScreen(context),
+                      ),
                       _Row(icon: Icons.logout, label: Str.logOut, onTap: onLogOut),
                       _Row(
                         icon: Icons.person_remove_outlined,
@@ -98,7 +104,7 @@ class ProfileScreen extends StatelessWidget {
                         color: Palette.berry,
                       ),
                     ].indexed) ...[
-                      if (i > 0) const SizedBox(height: 10),
+                      if (i > 0) const SizedBox(height: 8),
                       Entrance(delay: Duration(milliseconds: 60 + 50 * i), child: row),
                     ],
                   ]),
@@ -136,7 +142,7 @@ class _Row extends StatelessWidget {
         child: Row(children: [
           Icon(icon, color: color, size: 24),
           const SizedBox(width: 12),
-          Text(label, style: TextStyle(fontSize: 19, fontWeight: FontWeight.w600, color: color)),
+          Flexible(child: Text(label, style: TextStyle(fontSize: 19, fontWeight: FontWeight.w600, color: color))),
         ]),
       ),
     );

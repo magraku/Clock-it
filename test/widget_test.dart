@@ -32,6 +32,10 @@ void main() {
   Future<void> fillAccountSheet(WidgetTester tester, String email, String password, String button) async {
     await tester.enterText(find.widgetWithText(TextField, Str.email), email);
     await tester.enterText(find.byType(TextField).last, password);
+    if (button == Str.createAccount) {
+      await tester.tap(find.text(Str.confirmAge));
+      await tester.tap(find.text(Str.acceptTerms));
+    }
     await tester.tap(find.text(button).last);
     await pumpUntilFound(tester, find.text(Str.markEntry));
     await tester.pumpAndSettle();
@@ -46,6 +50,52 @@ void main() {
     await pumpUntilFound(tester, find.text(Str.logIn));
     await tester.pumpAndSettle();
   }
+
+  testWidgets('signup requires both confirmations and shows the legal notice', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    await start(tester);
+    await tester.tap(find.text(Str.signUp));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text(Str.legal));
+    await tester.pumpAndSettle();
+    expect(find.text(Str.privacyTitle), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text(Str.termsTitle),
+      200,
+      scrollable: find.descendant(of: find.byType(ListView), matching: find.byType(Scrollable)).first,
+    );
+    expect(find.text(Str.termsTitle), findsOneWidget);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    expect(tester.widgetList<CheckboxListTile>(find.byType(CheckboxListTile)).map((tile) => tile.value),
+        [false, false]);
+
+    await tester.enterText(find.widgetWithText(TextField, Str.email), 'ana@mail.com');
+    await tester.enterText(find.byType(TextField).last, 'secret1');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+    expect(find.text(Str.ageRequired), findsOneWidget);
+    expect(accounts.current, isNull);
+
+    await tester.tap(find.text(Str.confirmAge));
+    await tester.tap(find.text(Str.createAccount).last);
+    await tester.pumpAndSettle();
+    expect(find.text(Str.termsRequired), findsOneWidget);
+    expect(accounts.current, isNull);
+
+    await tester.tap(find.text(Str.acceptTerms));
+    await tester.tap(find.text(Str.createAccount).last);
+    await pumpUntilFound(tester, find.text(Str.markEntry));
+    await tester.pumpAndSettle();
+    expect(accounts.current?.email, 'ana@mail.com');
+
+    await tester.tap(find.text(Str.tabProfile));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(Str.legal));
+    await tester.pumpAndSettle();
+    expect(find.text(Str.privacyTitle), findsOneWidget);
+  });
 
   testWidgets('each account keeps its own hours', (tester) async {
     SharedPreferences.setMockInitialValues({});

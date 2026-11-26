@@ -24,7 +24,7 @@ enum GoalColor { green, orange, pink, yellow }
 class FocusTimer {
   FocusTimer({required this.totalMs, this.runningSince, this.doneMs = 0});
 
-  /// Chosen length (15, 20 or 30 min).
+  /// Chosen length in milliseconds.
   final int totalMs;
 
   /// Start of the current stretch (ms since epoch); null while paused.

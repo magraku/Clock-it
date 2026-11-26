@@ -7,6 +7,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'data/accounts.dart';
 import 'data/demo_accounts.dart';
+import 'data/focus_mode.dart';
 import 'data/hours_store.dart';
 import 'data/timer_alerts.dart';
 import 'data/web_cache_cleanup.dart';
@@ -64,6 +65,7 @@ Future<Services> _firebaseServices() async {
     storeFor: (a) => FirestoreHoursStore(a.uid),
     legacy: LocalHoursStore(),
     alerts: kIsWeb ? const NoTimerAlerts() : LocalTimerAlerts(),
+    focusMode: const LocalFocusMode(),
   );
 }
 

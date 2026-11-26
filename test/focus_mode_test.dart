@@ -39,7 +39,7 @@ void main() {
     state.resumeTimer('sfp');
     expect(mode.ends, [state.timerOf('sfp')!.endsAt]);
     now = now.add(const Duration(minutes: 10));
-    state.refresh();
+    await state.refresh();
     expect(mode.ends, isEmpty);
     expect(state.timerOf('sfp'), isNull);
     state.dispose();

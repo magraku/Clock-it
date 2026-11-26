@@ -98,7 +98,7 @@ void main() {
     expect(state.goals, hasLength(1));
   });
 
-  test('a timer logs its focus time when it ends, alerts once, and can pause', () {
+  test('a timer logs its focus time when it ends, alerts once, and can pause', () async {
     state.startTimer('sfp', 15);
     expect(alerts.scheduled['sfp'], clock.now.add(const Duration(minutes: 15)));
     expect(alerts.live['sfp']!.start, clock.now); // on the lock screen too
@@ -118,7 +118,7 @@ void main() {
 
     // The app was closed past the end: it settles on return, logging only up to the end.
     clock.advance(const Duration(hours: 3));
-    state.refresh();
+    await Future<void>.sync(state.refresh);
     expect(state.timerOf('sfp'), isNull);
     expect(state.minutesSince('sfp', DateTime(2026, 10, 12)), 15);
     expect(state.home.hours.days['2026-10-12']!.sessions, hasLength(2));

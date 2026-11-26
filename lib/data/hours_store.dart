@@ -7,6 +7,9 @@ import '../models/goals.dart';
 
 /// Where one account's goals and hours live.
 abstract class HoursStore {
+  /// Difference between the shared time base and this device's wall clock.
+  Future<Duration> clockOffset(DateTime Function() clock) async => Duration.zero;
+
   Future<UserData?> load();
   Future<void> save(UserData data);
 
@@ -23,6 +26,35 @@ class FirestoreHoursStore extends HoursStore {
       : _doc = (db ?? FirebaseFirestore.instance).collection('users').doc(uid);
 
   final DocumentReference<Map<String, dynamic>> _doc;
+
+  @override
+  Future<Duration> clockOffset(DateTime Function() clock) async {
+    final key = 'clockit-clock-offset-${_doc.id}';
+    SharedPreferences? prefs;
+    try {
+      prefs = await SharedPreferences.getInstance();
+    } on Exception {
+      // Calibration can still work without a local cache.
+    }
+    // A separate document never changes the account or its sync ordering.
+    final probe = _doc.collection('clock').doc();
+    final before = clock();
+    try {
+      await probe.set({'at': FieldValue.serverTimestamp()}).timeout(const Duration(seconds: 5));
+      final snapshot = await probe.get(const GetOptions(source: Source.server)).timeout(const Duration(seconds: 5));
+      final after = clock();
+      final server = snapshot.data()?['at'];
+      if (server is! Timestamp) throw StateError('Server clock unavailable');
+      final midpoint = before.add(after.difference(before) ~/ 2);
+      final offset = server.toDate().difference(midpoint);
+      await prefs?.setInt(key, offset.inMicroseconds).catchError((Object _) => false);
+      return offset;
+    } on Object {
+      return Duration(microseconds: prefs?.getInt(key) ?? 0);
+    } finally {
+      probe.delete().catchError((Object _) {});
+    }
+  }
 
   static UserData? _parse(Map<String, dynamic>? json) {
     if (json == null) return null;

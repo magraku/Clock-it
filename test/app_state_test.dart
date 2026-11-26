@@ -64,19 +64,34 @@ void main() {
     expect(UserData.fromJson({...state.data.toJson(), 'wall': 'neon'}).wallpaper, WallpaperStyle.photo);
   });
 
-  test('keeps whichever copy was saved last', () async {
+  test('an infinite goal is refused, and one saved by an older app reads as the default', () async {
+    state.setGoalHours('sfp', double.infinity);
+    expect(state.home.hours.goalHours, 140);
+    final g = state.createGoal('Gym', GoalColor.values.first, double.nan);
+    expect(g.hours.goalHours, Goal.defaultHours);
+    state.updateGoal(g.id, monthlyHours: double.infinity);
+    expect(state.goal(g.id).hours.goalHours, Goal.defaultHours);
+
+    final saved = state.data.toJson();
+    saved['goals'][0]['hours']['goal'] = double.infinity;
+    store.cloud['u'] = saved;
+    final again = AppState(store, clock: clock.call);
+    await again.load();
+    expect(again.home.hours.goalHours, 140);
+    again.dispose();
+  });
+
+  test('adopts each copy saved elsewhere, whatever its stamp', () async {
     state.setGoalHours('sfp', 120); // saved at 10:00
 
-    final older = UserData.starter(sfp: HoursData(goalHours: 100))..updatedAt = 1;
-    store.remote.add(older);
+    final stampedEarlier = UserData.starter(sfp: HoursData(goalHours: 100))..updatedAt = 1;
+    store.remote.add(stampedEarlier);
     await Future<void>.delayed(Duration.zero);
-    expect(state.home.hours.goalHours, 120);
+    expect(state.home.hours.goalHours, 100);
 
-    final newer = UserData.starter(sfp: HoursData(goalHours: 90))
-      ..updatedAt = DateTime(2026, 10, 12, 11).millisecondsSinceEpoch;
-    store.remote.add(newer);
-    await Future<void>.delayed(Duration.zero);
-    expect(state.home.hours.goalHours, 90);
+    state.setGoalHours('sfp', 90);
+    expect(state.data.updatedAt, clock.now.millisecondsSinceEpoch);
+    expect(UserData.fromJson(store.cloud['u']!).home.hours.goalHours, 90);
   });
 
   test('each goal keeps its own hours; Home can move and the last goal stays', () {

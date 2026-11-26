@@ -44,11 +44,20 @@ class AppState extends ChangeNotifier {
 
   bool isOpen(String goalId) => goal(goalId).hours.openSince != null;
 
-  /// The month's hours, with a running timer's stretch counted today.
+  /// The month's hours, including each day's part of a running focus timer.
   MonthSummary summary(String goalId, DateTime month) {
     final s = summarizeMonth(goal(goalId).hours, month.year, month.month, now);
-    final stretch = _timerStretchMinutes(goal(goalId));
-    if (stretch > 0 && month.year == now.year && month.month == now.month) s.minutesByDay[now.day - 1] += stretch;
+    final timer = goal(goalId).timer;
+    final since = timer?.runningSince, ends = timer?.endsAt;
+    if (since != null && ends != null) {
+      final end = _nowMs < ends ? _nowMs : ends;
+      for (final session in splitSession(since, end)) {
+        final date = DateTime.fromMillisecondsSinceEpoch(session.start);
+        if (date.year == month.year && date.month == month.month) {
+          s.minutesByDay[date.day - 1] += session.minutes;
+        }
+      }
+    }
     return s;
   }
 
@@ -120,22 +129,23 @@ class AppState extends ChangeNotifier {
   double minutesSince(String goalId, DateTime from) {
     final hours = goal(goalId).hours;
     final today = DateTime(now.year, now.month, now.day);
+    final timer = goal(goalId).timer;
+    final since = timer?.runningSince, ends = timer?.endsAt;
+    final nowMs = _nowMs;
     var total = 0.0;
     for (var d = DateTime(from.year, from.month, from.day); !d.isAfter(today); d = DateTime(d.year, d.month, d.day + 1)) {
-      total += dayMinutes(hours, dayKey(d), _nowMs);
+      total += dayMinutes(hours, dayKey(d), nowMs);
+      if (since != null && ends != null) {
+        total += intervalMinutesOnDay(since, nowMs < ends ? nowMs : ends, dayKey(d));
+      }
     }
-    return total + _timerStretchMinutes(goal(goalId));
-  }
-
-  /// The running timer stretch isn't logged until it pauses or ends.
-  double _timerStretchMinutes(Goal g) {
-    final since = g.timer?.runningSince;
-    return since == null ? 0 : (_nowMs - since) / 60000;
+    return total;
   }
 
   static void _log(HoursData hours, int start, int end) {
-    if (end <= start) return;
-    hours.days.putIfAbsent(dayKeyOf(start), DayEntry.new).sessions.add(Session(start, end));
+    for (final session in splitSession(start, end)) {
+      hours.days.putIfAbsent(dayKeyOf(session.start), DayEntry.new).sessions.add(session);
+    }
   }
 
   // ── Goals ────────────────────────────────────────────────────────────────

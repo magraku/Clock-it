@@ -255,23 +255,25 @@ class AppState extends ChangeNotifier {
     return changed;
   }
 
-  void _scheduleAlert(Goal g) {
+  Future<void> _scheduleAlert(Goal g) async {
     final ends = g.timer?.endsAt;
     if (ends == null) return;
-    alerts.schedule(
-      g.id,
-      DateTime.fromMillisecondsSinceEpoch(ends),
-      Str.timerDoneTitle,
-      Str.timerDoneBody(g.name, fmtHours(g.timer!.totalMs / 60000)),
-    );
-    alerts.showRunning(LiveTimer(
-      goalId: g.id,
-      goal: g.name,
-      // As in the app: the goal's colour, or plum on a butter goal.
-      color: (g.color == GoalColor.yellow ? Palette.inkDeep : g.color.color).toARGB32() & 0xFFFFFF,
-      start: DateTime.fromMillisecondsSinceEpoch(ends - g.timer!.totalMs),
-      end: DateTime.fromMillisecondsSinceEpoch(ends),
-    ));
+    await Future.wait([
+      alerts.schedule(
+        g.id,
+        DateTime.fromMillisecondsSinceEpoch(ends),
+        Str.timerDoneTitle,
+        Str.timerDoneBody(g.name, fmtHours(g.timer!.totalMs / 60000)),
+      ),
+      alerts.showRunning(LiveTimer(
+        goalId: g.id,
+        goal: g.name,
+        // As in the app: the goal's colour, or plum on a butter goal.
+        color: (g.color == GoalColor.yellow ? Palette.inkDeep : g.color.color).toARGB32() & 0xFFFFFF,
+        start: DateTime.fromMillisecondsSinceEpoch(ends - g.timer!.totalMs),
+        end: DateTime.fromMillisecondsSinceEpoch(ends),
+      )),
+    ]);
   }
 
   // ── Backup ───────────────────────────────────────────────────────────────
@@ -280,7 +282,8 @@ class AppState extends ChangeNotifier {
 
   /// Returns false (and changes nothing) when [text] is not a valid backup.
   /// A single-tracker backup (web version) replaces only Home's hours.
-  bool importJson(String text) {
+  Future<bool> importJson(String text) async {
+    final previous = _data;
     try {
       final j = jsonDecode(text) as Map<String, dynamic>;
       if (j['goals'] is List) {
@@ -291,7 +294,21 @@ class AppState extends ChangeNotifier {
     } on Object {
       return false;
     }
+    final restored = _data;
     _commit();
+    if (!identical(previous, restored)) {
+      await Future.wait([
+        for (final g in previous.goals)
+          if (g.timer?.running ?? false) alerts.cancel(g.id),
+      ]);
+      if (identical(_data, restored)) {
+        final nowMs = _nowMs;
+        await Future.wait([
+          for (final g in restored.goals)
+            if ((g.timer?.endsAt ?? nowMs) > nowMs) _scheduleAlert(g),
+        ]);
+      }
+    }
     return true;
   }
 

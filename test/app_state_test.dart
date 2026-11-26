@@ -19,6 +19,7 @@ class FakeClock {
 
 class RecordingAlerts implements TimerAlerts {
   final scheduled = <String, DateTime>{};
+  bool delayCancel = false;
 
   @override
   Future<void> schedule(String goalId, DateTime at, String title, String body) async => scheduled[goalId] = at;
@@ -30,6 +31,7 @@ class RecordingAlerts implements TimerAlerts {
 
   @override
   Future<void> cancel(String goalId) async {
+    if (delayCancel) await Future<void>.delayed(Duration.zero);
     scheduled.remove(goalId);
     live.remove(goalId);
   }
@@ -132,7 +134,43 @@ void main() {
     expect(state.minutesSince('sfp', clock.now), 12);
   });
 
-  test('old single-tracker data and web backups become the SFP goal', () {
+  test('restoring a backup clears stale timer alerts and lock-screen countdowns', () async {
+    final backup = state.exportJson();
+    final study = state.createGoal('Study', GoalColor.pink, 10);
+    state.startTimer('sfp', 15);
+    state.startTimer(study.id, 20);
+    expect(alerts.scheduled.keys, unorderedEquals(['sfp', study.id]));
+    expect(alerts.live.keys, unorderedEquals(['sfp', study.id]));
+
+    expect(await state.importJson(backup), isTrue);
+    expect(state.goals, hasLength(1));
+    expect(state.home.timer, isNull);
+    expect(alerts.scheduled, isEmpty, reason: 'the backup has no running timers');
+    expect(alerts.live, isEmpty);
+  });
+
+  test('restoring a backup schedules only timers that have time left', () async {
+    final study = state.createGoal('Study', GoalColor.pink, 10);
+    final reading = state.createGoal('Reading', GoalColor.green, 10);
+    state.startTimer('sfp', 30);
+    state.startTimer(study.id, 5);
+    state.startTimer(reading.id, 20);
+    state.pauseTimer(reading.id);
+    final backup = state.exportJson();
+
+    clock.advance(const Duration(minutes: 10));
+    state.startTimer('sfp', 15);
+    expect(alerts.scheduled['sfp'], clock.now.add(const Duration(minutes: 15)));
+
+    alerts.delayCancel = true;
+    expect(await state.importJson(backup), isTrue);
+    final end = clock.now.add(const Duration(minutes: 20));
+    expect(alerts.scheduled, {'sfp': end});
+    expect(alerts.live.keys, ['sfp']);
+    expect(alerts.live['sfp']!.end, end);
+  });
+
+  test('old single-tracker data and web backups become the SFP goal', () async {
     const web = '{"days":{"2026-10-01":{"m":300,"s":[]}},"open":null,"ts":5,"goal":120}';
     final data = UserData.fromJson(jsonDecode(web) as Map<String, dynamic>);
     expect(data.home.name, 'SFP');
@@ -140,13 +178,17 @@ void main() {
     expect(data.updatedAt, 5);
 
     final study = state.createGoal('Study', GoalColor.pink, 10);
-    expect(state.importJson(web), isTrue); // only Home's hours change
+    state.startTimer('sfp', 15);
+    expect(await state.importJson(web), isTrue); // only Home's hours change
     expect(state.home.hours.days['2026-10-01']!.manualMinutes, 300);
     expect(state.goal(study.id).name, 'Study');
 
     final again = UserData.fromJson(jsonDecode(state.exportJson()) as Map<String, dynamic>);
     expect(again.goals.map((g) => g.name), ['SFP', 'Study']);
-    expect(state.importJson('{"nope":1}'), isFalse);
+    expect(await state.importJson('{"goals":[]}'), isFalse);
+    expect(await state.importJson('{"nope":1}'), isFalse);
+    expect(alerts.scheduled['sfp'], clock.now.add(const Duration(minutes: 15)));
+    expect(alerts.live.keys, ['sfp']);
   });
 
   test('a new account takes over the hours saved on this phone, only once', () async {

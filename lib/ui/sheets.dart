@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
@@ -13,6 +14,7 @@ import '../models/goals.dart';
 import '../state/app_state.dart';
 import '../state/session.dart';
 import 'motion.dart';
+import 'screens/legal_screen.dart';
 import 'strings.dart';
 import 'theme.dart';
 import 'widgets/common.dart';
@@ -173,9 +175,12 @@ class _AccountSheetState extends State<_AccountSheet> {
   late bool _signUp = widget.signUp;
   final _email = TextEditingController();
   final _password = TextEditingController();
+  bool _ageConfirmed = false;
+  bool _termsAccepted = false;
   bool _busy = false;
   String? _error;
   String? _notice;
+  String? _signupError;
 
   @override
   void dispose() {
@@ -185,6 +190,11 @@ class _AccountSheetState extends State<_AccountSheet> {
   }
 
   Future<void> _submit() async {
+    if (_busy) return;
+    if (_signUp && (!_ageConfirmed || !_termsAccepted)) {
+      setState(() => _signupError = !_ageConfirmed ? Str.ageRequired : Str.termsRequired);
+      return;
+    }
     final email = _email.text.trim();
     final password = _password.text;
     if (email.isEmpty || password.isEmpty) {
@@ -238,6 +248,9 @@ class _AccountSheetState extends State<_AccountSheet> {
 
   void _toggleMode() => setState(() {
         _signUp = !_signUp;
+        _ageConfirmed = false;
+        _termsAccepted = false;
+        _signupError = null;
         _error = null;
         _notice = null;
       });
@@ -277,6 +290,35 @@ class _AccountSheetState extends State<_AccountSheet> {
           if (_notice != null) ...[
             const SizedBox(height: 10),
             Text(_notice!, style: _body.copyWith(color: Palette.turquoise, fontWeight: FontWeight.w600)),
+          ],
+          if (_signUp) ...[
+            const SizedBox(height: 8),
+            _LinkButton(Str.legal, onTap: _busy ? null : () => showLegalScreen(context)),
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              controlAffinity: ListTileControlAffinity.leading,
+              title: Text(Str.confirmAge, style: _body),
+              value: _ageConfirmed,
+              onChanged: _busy ? null : (value) => setState(() {
+                _ageConfirmed = value ?? false;
+                _signupError = null;
+              }),
+            ),
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              controlAffinity: ListTileControlAffinity.leading,
+              title: Text(Str.acceptTerms, style: _body),
+              value: _termsAccepted,
+              onChanged: _busy ? null : (value) => setState(() {
+                _termsAccepted = value ?? false;
+                _signupError = null;
+              }),
+            ),
+            if (_signupError != null)
+              Semantics(
+                liveRegion: true,
+                child: Text(_signupError!, style: _body.copyWith(color: Palette.berry)),
+              ),
           ],
           const SizedBox(height: 18),
           _SheetButton(
@@ -883,10 +925,18 @@ class _BackupSheet extends StatelessWidget {
   }
 
   Future<void> _export(BuildContext context) async {
+    final filename = 'clock-it-backup-${dayKey(state.now)}.json';
+    if (kIsWeb) {
+      await Share.shareXFiles(
+        [XFile.fromData(utf8.encode(state.exportJson()), mimeType: 'application/json')],
+        fileNameOverrides: [filename],
+      );
+      return;
+    }
     final box = context.findRenderObject() as RenderBox?;
     final origin = box == null ? null : box.localToGlobal(Offset.zero) & box.size;
     final dir = await getTemporaryDirectory();
-    final file = File('${dir.path}/clock-it-backup-${dayKey(state.now)}.json');
+    final file = File('${dir.path}/$filename');
     await file.writeAsString(state.exportJson());
     await Share.shareXFiles(
       [XFile(file.path, mimeType: 'application/json')],

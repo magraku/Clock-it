@@ -11,6 +11,28 @@ flutter="$flutter_dir/bin/flutter"
 export PUB_CACHE="$cache_dir/pub"
 export FLUTTER_SUPPRESS_ANALYTICS=true
 
+download_checked() {
+  local url=$1 file=$2 sha256=$3
+  if [[ ! -f "$file" ]] || ! printf '%s  %s\n' "$sha256" "$file" | sha256sum --check --status; then
+    curl --fail --silent --show-error --location --retry 3 --output "$file.download" "$url"
+    printf '%s  %s\n' "$sha256" "$file.download" | sha256sum --check
+    mv -- "$file.download" "$file"
+  fi
+}
+
+configure_local_fallback_fonts() {
+  local output="$PWD/build/web/font-fallbacks"
+  local noto="$cache_dir/font-fallbacks.zip"
+
+  # Flutter bundles Roboto with --no-web-resources-cdn. Match the pinned SDK's Noto fallback table.
+  download_checked 'https://chrome-infra-packages.appspot.com/dl/flutter/flutter_font_fallbacks/+/44bd38be0bc8c189a397ca6dd6f737746a9e0c6117b96a8f84f1edf6acd1206b' \
+    "$noto" 7dfb35718596d45cf31b442bc33e313fde4987a2037d6765405170782e0da83c
+  mkdir -p "$output"
+  unzip -oq "$noto" 'LICENSE.txt' '*.woff2' -d "$output"
+  sed -i 's|^_flutter\.loader\.load();$|_flutter.loader.load({config: {fontFallbackBaseUrl: new URL("font-fallbacks/", document.baseURI).href}});|' \
+    build/web/flutter_bootstrap.js
+}
+
 case "${1:-}" in
   install)
     if [[ ! -x "$flutter" || ! -f "$flutter_dir/.git/HEAD" ]]; then
@@ -29,7 +51,8 @@ case "${1:-}" in
     "$flutter" pub get
     ;;
   build)
-    "$flutter" build web --release --no-pub
+    "$flutter" build web --release --no-pub --no-web-resources-cdn
+    configure_local_fallback_fonts
     ;;
   *)
     printf 'Usage: %s {install|build}\n' "$0" >&2

@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 
 import '../data/accounts.dart';
+import '../data/focus_mode.dart';
 import '../data/hours_store.dart';
 import '../data/timer_alerts.dart';
 import '../logic/time_math.dart';
@@ -19,11 +20,13 @@ class AppState extends ChangeNotifier {
     this.account,
     DateTime Function()? clock,
     this.alerts = const NoTimerAlerts(),
+    this.focusMode = const NoFocusMode(),
   }) : _clock = clock ?? DateTime.now;
 
   final HoursStore _store;
   final Account? account;
   final TimerAlerts alerts;
+  final FocusMode focusMode;
   final DateTime Function() _clock;
   Duration _clockOffset = Duration.zero;
   Timer? _ticker;
@@ -311,6 +314,7 @@ class AppState extends ChangeNotifier {
     for (final g in _data.goals) {
       _scheduleAlert(g);
     }
+    syncFocusMode();
   }
 
   void _commit() {
@@ -324,6 +328,7 @@ class AppState extends ChangeNotifier {
 
   /// Ticks once per second only while a session or a timer is running.
   void _syncTicker() {
+    syncFocusMode();
     if (_anythingRunning && _ticker == null) {
       _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
         if (_refreshing != null) return;
@@ -339,9 +344,18 @@ class AppState extends ChangeNotifier {
     }
   }
 
+  void syncFocusMode() {
+    focusMode.sync([
+      for (final goal in _data.goals)
+        if (goal.timer?.endsAt case final int end when end > _nowMs)
+          DateTime.fromMillisecondsSinceEpoch(end).subtract(_clockOffset).millisecondsSinceEpoch,
+    ]);
+  }
+
   @override
   void dispose() {
     _disposed = true;
+    focusMode.sync([]);
     _ticker?.cancel();
     _sync?.cancel();
     super.dispose();

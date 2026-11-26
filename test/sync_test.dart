@@ -1,3 +1,4 @@
+import 'package:clock_it/data/focus_mode.dart';
 import 'package:clock_it/data/hours_store.dart';
 import 'package:clock_it/data/timer_alerts.dart';
 import 'package:clock_it/state/app_state.dart';
@@ -8,11 +9,22 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class RecordingAlerts extends NoTimerAlerts {
   DateTime? end;
+  LiveTimer? live;
+
+  @override
+  Future<void> showRunning(LiveTimer timer) async => live = timer;
 
   @override
   Future<void> schedule(
           String goalId, DateTime at, String title, String body) async =>
       end = at;
+}
+
+class RecordingFocusMode extends NoFocusMode {
+  List<int> ends = [];
+
+  @override
+  Future<void> sync(List<int> endsAt) async => ends = endsAt;
 }
 
 void main() {
@@ -26,10 +38,12 @@ void main() {
       var firstNow = serverNow;
       var secondNow = firstNow.add(Duration(minutes: skew));
       final alerts = RecordingAlerts();
+      final secondAlerts = RecordingAlerts();
+      final mode = RecordingFocusMode();
       final first = AppState(FirestoreHoursStore('u', db: db),
           clock: () => firstNow, alerts: alerts);
-      final second =
-          AppState(FirestoreHoursStore('u', db: db), clock: () => secondNow);
+      final second = AppState(FirestoreHoursStore('u', db: db),
+          clock: () => secondNow, alerts: secondAlerts, focusMode: mode);
       addTearDown(first.dispose);
       addTearDown(second.dispose);
       await first.load();
@@ -40,6 +54,8 @@ void main() {
           closeTo(15 * 60000, 1000));
       await Future<void>.delayed(const Duration(milliseconds: 20));
       final timer = second.timerOf('sfp')!;
+      expect(mode.ends.single - secondNow.millisecondsSinceEpoch,
+          closeTo(15 * 60000, 1000));
       expect(timer.remainingMs(second.now.millisecondsSinceEpoch),
           closeTo(15 * 60000, 1000));
       firstNow = firstNow.add(const Duration(minutes: 5));
@@ -49,10 +65,18 @@ void main() {
           closeTo(10 * 60000, 1000));
       await Future<void>.sync(second.refresh);
       expect(second.timerOf('sfp'), isNotNull);
+      expect(mode.ends.single - secondNow.millisecondsSinceEpoch,
+          closeTo(10 * 60000, 1000));
+      expect(secondAlerts.end!.difference(secondNow).inMilliseconds,
+          closeTo(10 * 60000, 1000));
+      expect(secondAlerts.live!.end, secondAlerts.end);
+      expect(secondAlerts.live!.start.difference(secondNow).inMilliseconds,
+          closeTo(-5 * 60000, 1000));
       secondNow = secondNow.add(const Duration(minutes: 11));
       serverNow = serverNow.add(const Duration(minutes: 11));
       await Future<void>.sync(second.refresh);
       expect(second.timerOf('sfp'), isNull);
+      expect(mode.ends, isEmpty);
     });
   }
 
@@ -61,9 +85,10 @@ void main() {
     var localNow = serverNow.add(const Duration(hours: 1));
     final db = FakeFirebaseFirestore(clock: Clock(() => serverNow));
     final alerts = RecordingAlerts();
+    final mode = RecordingFocusMode();
     final sender = AppState(FirestoreHoursStore('u', db: db), clock: () => serverNow);
     final state = AppState(FirestoreHoursStore('u', db: db),
-        clock: () => localNow, alerts: alerts);
+        clock: () => localNow, alerts: alerts, focusMode: mode);
     addTearDown(sender.dispose);
     addTearDown(state.dispose);
     await sender.load();
@@ -75,6 +100,8 @@ void main() {
     expect(state.timerOf('sfp')!.remainingMs(state.now.millisecondsSinceEpoch),
         closeTo(15 * 60000, 1000));
     expect(alerts.end!.difference(localNow).inMilliseconds,
+        closeTo(15 * 60000, 1000));
+    expect(mode.ends.single - localNow.millisecondsSinceEpoch,
         closeTo(15 * 60000, 1000));
     state.pauseTimer('sfp');
     expect(state.timerOf('sfp')!.doneMs, greaterThanOrEqualTo(0));

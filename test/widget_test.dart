@@ -125,30 +125,34 @@ void main() {
 
     // It opens the new goal's screen.
     expect(find.text('STUDY HOURS'), findsOneWidget);
-    expect(find.text(Str.timer), findsOneWidget);
-    // Its month, read only, until a time is picked.
-    final monthLine = find.text(Str.ofGoal('0h', '20h'));
-    expect(monthLine, findsOneWidget);
+    expect(find.text(Str.focusTitle), findsOneWidget);
+    expect(find.text('15:00'), findsOneWidget);
+
+    await tester.tap(find.byTooltip(Str.moonHint));
+    await settle();
+    await tester.tap(find.text(Str.cancel));
+    await settle();
+    expect(find.text(Str.cancel), findsNothing);
+    expect(find.text('STUDY HOURS'), findsOneWidget);
 
     await tester.tap(find.text(Str.minutesChip(15)));
     await settle();
-    expect(monthLine, findsNothing);
     expect(find.text(Str.start), findsOneWidget);
     expect(cloud['uid-0']!['goals'][1]['timer'], isNull); // waits for Start
 
+    await tester.ensureVisible(find.bySemanticsLabel(Str.hourglassStyle(Str.hourglassNames[2])));
     await tester.tap(find.bySemanticsLabel(Str.hourglassStyle(Str.hourglassNames[2])));
     await settle();
     expect(cloud['uid-0']!['glass'], 'line');
 
     await tester.tap(find.text(Str.start));
     await settle();
-    // The time left shows on the button (real clock: 15:00 or just under).
-    expect(find.textContaining(RegExp('^${Str.stop} · 1[45]:[0-5][0-9]\$')), findsOneWidget);
+    expect(find.text(Str.pause), findsOneWidget);
     expect(cloud['uid-0']!['goals'][1]['timer'], isNotNull);
 
-    await tester.tap(find.textContaining(Str.stop));
+    await tester.tap(find.byTooltip(Str.stop));
     await settle();
-    expect(monthLine, findsOneWidget);
+    expect(find.text(Str.start), findsOneWidget);
 
     // Back on the list (tap the tab again), both goals are there.
     await tester.tap(find.text(Str.tabGoals));

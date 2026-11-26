@@ -111,7 +111,7 @@ class AppState extends ChangeNotifier {
   }
 
   void setGoalHours(String goalId, double hours) {
-    if (hours <= 0) return;
+    if (!hours.isFinite || hours <= 0) return;
     goal(goalId).hours.goalHours = hours;
     _commit();
   }
@@ -145,7 +145,7 @@ class AppState extends ChangeNotifier {
       id: Goal.newId(),
       name: name.trim(),
       color: color,
-      hours: HoursData(goalHours: monthlyHours > 0 ? monthlyHours : Goal.defaultHours),
+      hours: HoursData(goalHours: monthlyHours.isFinite && monthlyHours > 0 ? monthlyHours : Goal.defaultHours),
     );
     _data.goals.add(g);
     if (makeHome) _data.home = g;
@@ -158,7 +158,7 @@ class AppState extends ChangeNotifier {
     if (g == null) return;
     if (name != null && name.trim().isNotEmpty) g.name = name.trim();
     if (color != null) g.color = color;
-    if (monthlyHours != null && monthlyHours > 0) g.hours.goalHours = monthlyHours;
+    if (monthlyHours != null && monthlyHours.isFinite && monthlyHours > 0) g.hours.goalHours = monthlyHours;
     if (makeHome == true) _data.home = g;
     _commit();
   }

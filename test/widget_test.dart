@@ -51,6 +51,16 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  test('privacy notice identifies the controller and contact in both languages', () {
+    final wasSpanish = Str.spanish;
+    addTearDown(() => Str.useSpanish(wasSpanish));
+    for (final spanish in [false, true]) {
+      Str.useSpanish(spanish);
+      expect(Str.privacyNotice, contains('Maria Gracia Ramirez Ku'));
+      expect(Str.privacyNotice, contains('clockit.privacy@gmail.com'));
+    }
+  });
+
   testWidgets('signup requires both confirmations and shows the legal notice', (tester) async {
     SharedPreferences.setMockInitialValues({});
     await start(tester);

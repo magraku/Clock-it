@@ -42,8 +42,12 @@ abstract final class Str {
   static String get legal => _t('Privacy and terms', 'Privacidad y condiciones');
   static String get privacyTitle => _t('Privacy Notice', 'Aviso de privacidad');
   static String get termsTitle => _t('Terms of Use', 'Condiciones de uso');
+  static const _privacyController = 'Maria Gracia Ramirez Ku';
+  static const _privacyEmail = 'clockit.privacy@gmail.com';
   static String get privacyNotice => _t(
-        'Clock it processes your email and account ID, work hours and sessions, goals, and preferences '
+        'The data controller for Clock it is $_privacyController. For privacy questions or to '
+            'exercise your data protection rights, email $_privacyEmail.\n\n'
+            'Clock it processes your email and account ID, work hours and sessions, goals, and preferences '
             'to provide and sync the service you request under the Terms of Use. We have a legitimate '
             'interest in using technical data to keep the service secure. Signup asks you to confirm your age '
             'without collecting your date of birth. Password reset emails are sent only on request.\n\n'
@@ -57,7 +61,9 @@ abstract final class Str {
             'Depending on your circumstances, EU data protection law gives you rights to access, correct, '
             'erase, or obtain a copy of your personal data, restrict or object to certain processing, '
             'and lodge a complaint with your data protection authority.',
-        'Clock it trata tu correo e identificador de cuenta, horas y sesiones de trabajo, metas y '
+        'Responsable del tratamiento de datos de Clock it: $_privacyController. Para consultas de '
+            'privacidad o para ejercer tus derechos de protección de datos, escribe a $_privacyEmail.\n\n'
+            'Clock it trata tu correo e identificador de cuenta, horas y sesiones de trabajo, metas y '
             'preferencias para prestar y sincronizar el servicio que solicitas conforme a las Condiciones '
             'de uso. Tenemos un interés legítimo en usar datos técnicos para proteger el servicio. Al registrarte '
             'te pedimos que confirmes tu edad sin recoger tu fecha de nacimiento. Solo enviamos correos '
